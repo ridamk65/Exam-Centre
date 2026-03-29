@@ -1,35 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UserPlus, Trash2, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Table, TableRow, TableCell } from '@/components/ui/Table';
 import { Card } from '@/components/ui/Card';
-import { MOCK_USERS } from '@/lib/constants';
 import toast from 'react-hot-toast';
 import { QRCodeCanvas } from 'qrcode.react';
 
 export default function UsersPage() {
-    const [users, setUsers] = useState(MOCK_USERS);
+    const [users, setUsers] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [showQR, setShowQR] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [newUser, setNewUser] = useState({ name: '', role: '', department: '' });
+    const [newUser, setNewUser] = useState({ name: '', fingerprintId: '', faceEncoding: 'RFID_USER', role: 'officer' });
 
-    const handleAddUser = () => {
-        if (!newUser.name || !newUser.role || !newUser.department) {
-            toast.error('Please fill all fields');
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/users');
+                const data = await response.json();
+                setUsers(data);
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+                toast.error('Failed to load users');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    const handleAddUser = async () => {
+        if (!newUser.name || !newUser.fingerprintId) {
+            toast.error('Name and UID are required');
             return;
         }
 
-        const user = {
-            id: `FAC${String(users.length + 1).padStart(3, '0')}`,
-            ...newUser,
-        };
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newUser),
+            });
 
-        setUsers([...users, user]);
-        setNewUser({ name: '', role: '', department: '' });
-        setShowAddForm(false);
-        toast.success('User added successfully!');
+            const data = await response.json();
+
+            if (data.success) {
+                const addedUser = { ...newUser, id: data.userId };
+                setUsers([...users, addedUser]);
+                setNewUser({ name: '', fingerprintId: '', faceEncoding: 'RFID_USER', role: 'officer' });
+                setShowAddForm(false);
+                toast.success('User registered successfully!');
+            } else {
+                toast.error(data.error || 'Failed to register user');
+            }
+        } catch (error) {
+            toast.error('Registration failed');
+        }
     };
 
     const handleDeleteUser = (id: string) => {
@@ -67,18 +96,20 @@ export default function UsersPage() {
                         />
                         <input
                             type="text"
-                            placeholder="Role"
+                            placeholder="UID (Fingerprint/RFID)"
+                            value={newUser.fingerprintId}
+                            onChange={(e) => setNewUser({ ...newUser, fingerprintId: e.target.value })}
+                            className="px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-[var(--color-text)]"
+                        />
+                        <select
                             value={newUser.role}
                             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                             className="px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-[var(--color-text)]"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Department"
-                            value={newUser.department}
-                            onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                            className="px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-[var(--color-text)]"
-                        />
+                        >
+                            <option value="officer">Officer</option>
+                            <option value="admin">Admin</option>
+                            <option value="faculty">Faculty</option>
+                        </select>
                     </div>
                     <div className="flex gap-2">
                         <Button onClick={handleAddUser}>Save User</Button>
@@ -89,7 +120,7 @@ export default function UsersPage() {
 
             {/* Users Table */}
             <div className="animate-fade-in">
-                <Table headers={['ID', 'Name', 'Role', 'Department', 'Actions']}>
+                <Table headers={['ID', 'Name', 'Role', 'UID', 'Actions']}>
                     {users.map((user) => (
                         <TableRow key={user.id}>
                             <TableCell>
@@ -99,7 +130,9 @@ export default function UsersPage() {
                                 <span className="font-medium">{user.name}</span>
                             </TableCell>
                             <TableCell>{user.role}</TableCell>
-                            <TableCell>{user.department}</TableCell>
+                            <TableCell>
+                                <code className="text-xs">{user.fingerprintId}</code>
+                            </TableCell>
                             <TableCell>
                                 <div className="flex gap-2">
                                     <Button

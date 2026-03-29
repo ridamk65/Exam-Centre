@@ -1,18 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, CheckCircle, XCircle, Filter } from 'lucide-react';
 import { Table, TableRow, TableCell } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { MOCK_LOGS } from '@/lib/constants';
 import { formatDate, truncateHash, getStatusColor, convertToCSV, downloadFile } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 export default function LogsPage() {
-    const [logs, setLogs] = useState(MOCK_LOGS);
+    const [logs, setLogs] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'granted' | 'denied'>('all');
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchLogs = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/logs');
+                const data = await response.json();
+                setLogs(data);
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+                toast.error('Failed to load access logs');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLogs();
+    }, []);
 
     const filteredLogs = logs.filter(log => {
         if (filter === 'all') return true;

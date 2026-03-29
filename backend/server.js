@@ -7,6 +7,16 @@ require("./database/db"); // initialize SQLite
 
 const app = express();
 
+// --- Log incoming requests ---
+app.use((req, res, next) => {
+    if (req.url === "/api/auth/verify") {
+        console.log(`[HARDWARE-INCOMING] Scan detected! Method: ${req.method}`);
+    } else {
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    }
+    next();
+});
+
 // --- Security Middleware ---
 app.use(helmet());                                      // HTTP security headers
 app.use(cors({
@@ -40,6 +50,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(5000, () => {
-    console.log("✅ Server running on port 5000");
+app.listen(5000, "0.0.0.0", () => {
+    console.log("✅ Server running on port 5000 (Available on Network)");
 });

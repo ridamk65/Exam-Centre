@@ -17,17 +17,29 @@ export default function AdminLoginPage() {
         setError('');
         setLoading(true);
 
-        // Simulated admin credential check
-        setTimeout(() => {
-            if (username === 'admin' && password === 'admin123') {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/admin-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fingerprintId: username, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.token) {
                 // Store admin session in localStorage
+                localStorage.setItem('adminToken', data.token);
                 localStorage.setItem('adminAuthenticated', 'true');
                 router.push('/dashboard');
             } else {
-                setError('Invalid admin credentials. Please try again.');
+                setError(data.message || 'Invalid admin credentials. Please try again.');
                 setLoading(false);
             }
-        }, 1200);
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Unable to connect to the authentication server.');
+            setLoading(false);
+        }
     };
 
     return (

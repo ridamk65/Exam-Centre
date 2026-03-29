@@ -1,24 +1,43 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Users, Shield, Clock } from 'lucide-react';
 import { MetricCard } from '@/components/ui/Card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MOCK_USERS, MOCK_LOGS } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
-
-const chartData = [
-    { date: '2026-02-09', accesses: 12 },
-    { date: '2026-02-10', accesses: 18 },
-    { date: '2026-02-11', accesses: 15 },
-    { date: '2026-02-12', accesses: 22 },
-    { date: '2026-02-13', accesses: 28 },
-];
+import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
-    const totalUsers = MOCK_USERS.length;
+    const [stats, setStats] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const verifiedLogs = MOCK_LOGS.filter(log => log.status === 'Granted').length;
-    const lastAccess = MOCK_LOGS[0];
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/stats');
+                const data = await response.json();
+                setStats(data);
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+                toast.error('Failed to load dashboard statistics');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (isLoading || !stats) {
+        return <div className="p-8 text-center text-[var(--color-text-muted)] animate-pulse">Loading dashboard hardware data...</div>;
+    }
+
+    const totalUsers = stats.totalUsers;
+    const verifiedLogs = stats.verifiedLogs;
+    const lastAccessTime = stats.lastAccess ? formatDate(stats.lastAccess).split(',')[1].trim() : 'No Data';
+    const chartData = stats.chartData.length > 0 ? stats.chartData : [
+        { date: 'No Data', accesses: 0 }
+    ];
 
     return (
         <div className="space-y-8">
@@ -36,18 +55,18 @@ export default function DashboardPage() {
                     title="Total Authorized Users"
                     value={totalUsers}
                     icon={<Users size={32} />}
-                    trend={{ value: 12, isPositive: true }}
+                    trend={{ value: 0, isPositive: true }}
                 />
 
                 <MetricCard
                     title="Verified Access Logs"
                     value={verifiedLogs}
                     icon={<Shield size={32} />}
-                    trend={{ value: 8, isPositive: true }}
+                    trend={{ value: 0, isPositive: true }}
                 />
                 <MetricCard
                     title="Last Access"
-                    value={formatDate(lastAccess.timestamp).split(',')[1].trim()}
+                    value={lastAccessTime}
                     icon={<Clock size={32} />}
                 />
             </div>

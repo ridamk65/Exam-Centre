@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --maroon: #831238;
+  --maroon-dark: #6a0e2d;
+  --maroon-light: #fce8ef;
+  --teal: #3a9fa8;
+  --teal-dark: #2c8089;
+  --teal-light: #e0f5f7;
+  --bg-main: #f8f9fb;
+  --bg-card: #ffffff;
+  --border: #e8ecf0;
+  --text-primary: #1a1a2e;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --shadow-sm: 0 1px 20px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  --radius: 12px;
+  --radius-sm: 6px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ─────────────────────────────── */
+h1, h2, h3, h4 {
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ── Components ────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  padding: 16px 20px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* ── Badges ────────────────────────────────── */
+.badge-dept, .badge-year {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-dept.cse { background: #e0e7ff; color: #4338ca; }
+.badge-dept.ece { background: #e0f2fe; color: #0369a1; }
+.badge-dept.mech { background: #fee2e2; color: #b91c1c; }
+.badge-dept.it { background: #f3e8ff; color: #7e22ce; }
+.badge-dept.civil { background: #fef3c7; color: #b45309; }
+.badge-dept.eee { background: #dcfce7; color: #15803d; }
+.badge-dept.bme { background: #fce7f3; color: #be185d; }
+
+.badge-year.y1 { background: #fef3c7; color: #92400e; }
+.badge-year.y2 { background: #dbeafe; color: #1e40af; }
+.badge-year.y3 { background: #dcfce7; color: #166534; }
+.badge-year.y4 { background: #f3e8ff; color: #6b21a8; }
+
+/* ── Forms ──────────────────────────────────── */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--text-primary);
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--maroon);
+  box-shadow: 0 0 0 3px rgba(131, 18, 56, 0.1);
+}
+
+/* ── Custom Scrollbar ───────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 20px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+

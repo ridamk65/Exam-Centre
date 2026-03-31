@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 import {
-  getData, setData, seedData, deptClass, yearClass, fmtDate, genId,
+  deptClass, yearClass, fmtDate,
   type ExamSchedule,
 } from '../utils/data';
+
+const API_BASE = 'http://localhost:3000/api';
 
 interface ModalState {
   open: boolean;
   isEdit: boolean;
-  id: number | null;
+  id: string | null;
   exam_date: string;
   dept: string;
   year: string;
@@ -27,42 +29,67 @@ const ExamSchedulePage = () => {
   });
   const { showToast, ToastContainer } = useToast();
 
-  useEffect(() => { seedData(); loadSchedules(); }, []);
+  useEffect(() => { loadSchedules(); }, []);
 
-  const loadSchedules = () => setSchedules(getData<ExamSchedule>('exam_schedule'));
+  const loadSchedules = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/schedules`);
+      if (res.ok) {
+        const data = await res.json();
+        setSchedules(data);
+      }
+    } catch (err) {
+      showToast('Error loading schedules.', 'error');
+    }
+  };
 
   const filtered = filterDate ? schedules.filter(s => s.exam_date === filterDate) : schedules;
   const uniqueDates = [...new Set(schedules.map(s => fmtDate(s.exam_date)))];
 
   const openAdd = () => setModal({ open: true, isEdit: false, id: null, exam_date: '', dept: '', year: '', subject: '' });
-  const openEdit = (s: ExamSchedule) => setModal({ open: true, isEdit: true, id: s.id, exam_date: s.exam_date, dept: s.dept, year: String(s.year), subject: s.subject });
+  const openEdit = (s: ExamSchedule) => setModal({ open: true, isEdit: true, id: s.id || null, exam_date: s.exam_date, dept: s.dept, year: String(s.year), subject: s.subject });
   const closeModal = () => setModal(m => ({ ...m, open: false }));
 
-  const saveSchedule = () => {
+  const saveSchedule = async () => {
     const { exam_date, dept, year, subject, isEdit, id } = modal;
     const yearNum = parseInt(year);
     const cleanSubject = subject.trim();
     if (!exam_date || !dept || !yearNum || !cleanSubject) { showToast('Please fill all fields.', 'error'); return; }
 
-    const list = getData<ExamSchedule>('exam_schedule');
-    if (!isEdit) {
-      list.push({ id: genId(), exam_date, dept, year: yearNum, subject: cleanSubject });
-      showToast('Exam schedule added!', 'success');
-    } else {
-      const idx = list.findIndex(s => s.id === id);
-      if (idx !== -1) list[idx] = { id: id!, exam_date, dept, year: yearNum, subject: cleanSubject };
-      showToast('Exam schedule updated!', 'success');
+    try {
+      const method = isEdit ? 'PUT' : 'POST';
+      const url = isEdit ? `${API_BASE}/schedules/${id}` : `${API_BASE}/schedules`;
+      
+      const payload = { exam_date, dept, year: yearNum, subject: cleanSubject };
+
+      const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        showToast('Failed to save schedule.', 'error');
+        return;
+      }
+
+      showToast(`Exam schedule ${isEdit ? 'updated' : 'added'}!`, 'success');
+      loadSchedules();
+      closeModal();
+    } catch (err) {
+      showToast('API error.', 'error');
     }
-    setData('exam_schedule', list);
-    loadSchedules();
-    closeModal();
   };
 
-  const deleteSchedule = (id: number) => {
-    if (!confirm('Delete this exam schedule?')) return;
-    setData('exam_schedule', getData<ExamSchedule>('exam_schedule').filter(s => s.id !== id));
-    showToast('Schedule deleted.', 'warning');
-    loadSchedules();
+  const deleteSchedule = async (id: string | undefined) => {
+    if (!id || !confirm('Delete this exam schedule?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/schedules/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Schedule deleted.', 'warning');
+        loadSchedules();
+      }
+    } catch (err) {
+      showToast('Error deleting schedule.', 'error');
+    }
   };
 
   return (

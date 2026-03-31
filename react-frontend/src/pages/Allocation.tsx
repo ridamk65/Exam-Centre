@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 import {
-  getData, seedData, fmtDate, generateAllocation, deptClass,
+  getData, seedData, fmtDate, deptClass,
   type ExamSchedule, type Allocation,
 } from '../utils/data';
+
+const API_BASE = 'http://localhost:3000/api';
 
 const AllocationPage = () => {
   const [examDate, setExamDate] = useState('');
@@ -30,23 +32,49 @@ const AllocationPage = () => {
     }
   }, []);
 
-  const onDateChange = (date: string) => {
+  const onDateChange = async (date: string) => {
     setExamDate(date);
     const allSchedules = getData<ExamSchedule>('exam_schedule');
     setDateSchedules(date ? allSchedules.filter(s => s.exam_date === date) : []);
     setResult(null);
+
+    // Fetch existing allocation from backend
+    if (date) {
+      try {
+        const res = await fetch(`${API_BASE}/allocations?date=${date}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResult(data);
+        }
+      } catch (err) { }
+    }
   };
 
-  const generate = () => {
+  const generate = async () => {
     if (!examDate) { showToast('Please select an exam date.', 'error'); return; }
     setGenerating(true);
-    setTimeout(() => {
-      const res = generateAllocation(examDate);
+    
+    try {
+      const res = await fetch(`${API_BASE}/allocations/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examDate })
+      });
+      
+      const payload = await res.json();
       setGenerating(false);
-      if ('error' in res) { showToast(res.error, 'error'); return; }
-      showToast(`✅ Allocation generated! ${res.total_students} students in ${res.halls_used} hall(s).`, 'success');
-      setResult(res);
-    }, 800);
+
+      if (!res.ok) {
+        showToast(payload.error || 'Failed to generate allocation', 'error');
+        return;
+      }
+      
+      showToast(`✅ Allocation generated! ${payload.total_students} students in ${payload.halls_used} hall(s).`, 'success');
+      setResult(payload);
+    } catch (err) {
+      setGenerating(false);
+      showToast('Network error while generating.', 'error');
+    }
   };
 
   const maxPerHall = result ? result.halls.reduce((a, h) => Math.max(a, h.allocated), 0) : 0;

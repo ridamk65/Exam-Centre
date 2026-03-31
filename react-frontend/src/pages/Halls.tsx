@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
-import { getData, setData, seedData, type Hall } from '../utils/data';
+import { type Hall } from '../utils/data';
+
+const API_BASE = 'http://localhost:3000/api';
 
 interface ModalState {
   open: boolean;
   isEdit: boolean;
+  id?: string;
   hall_no: string;
-  block: string;
+  block_name: string;
   floor: string;
   capacity: string;
+  rows: string;
+  seats_per_row: string;
 }
 
 const BLOCKS = ['A', 'B', 'C', 'D', 'E'];
@@ -17,49 +22,80 @@ const BLOCKS = ['A', 'B', 'C', 'D', 'E'];
 const Halls = () => {
   const [halls, setHalls] = useState<Hall[]>([]);
   const [modal, setModal] = useState<ModalState>({
-    open: false, isEdit: false, hall_no: '', block: '', floor: '', capacity: '',
+    open: false, isEdit: false, id: '', hall_no: '', block_name: '', floor: '', capacity: '', rows: '5', seats_per_row: '8'
   });
   const { showToast, ToastContainer } = useToast();
 
-  useEffect(() => { seedData(); loadHalls(); }, []);
+  useEffect(() => { loadHalls(); }, []);
 
-  const loadHalls = () => setHalls(getData<Hall>('halls'));
+  const loadHalls = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/halls`);
+      if (res.ok) {
+        const data = await res.json();
+        setHalls(data);
+      }
+    } catch (err) {
+      showToast('Error loading halls.', 'error');
+    }
+  };
 
   const totalCapacity = halls.reduce((a, h) => a + Number(h.capacity), 0);
 
-  const openAdd = () => setModal({ open: true, isEdit: false, hall_no: '', block: '', floor: '', capacity: '' });
-  const openEdit = (h: Hall) => setModal({ open: true, isEdit: true, hall_no: h.hall_no, block: h.block, floor: String(h.floor), capacity: String(h.capacity) });
+  const openAdd = () => setModal({ open: true, isEdit: false, id: '', hall_no: '', block_name: '', floor: '', capacity: '', rows: '5', seats_per_row: '8' });
+  const openEdit = (h: Hall) => setModal({ 
+    open: true, isEdit: true, id: h.id, hall_no: h.hall_no, block_name: h.block_name, 
+    floor: String(h.floor), capacity: String(h.capacity), 
+    rows: String(h.rows || 5), seats_per_row: String(h.seats_per_row || 8) 
+  });
   const closeModal = () => setModal(m => ({ ...m, open: false }));
 
-  const saveHall = () => {
+  const saveHall = async () => {
     const hall_no = modal.hall_no.trim().toUpperCase();
-    const { block } = modal;
+    const { block_name, id, isEdit } = modal;
     const floor = parseInt(modal.floor);
     const capacity = parseInt(modal.capacity);
-    if (!hall_no || !block || isNaN(floor) || isNaN(capacity) || capacity < 1) {
-      showToast('Please fill all fields correctly.', 'error'); return;
+    const rows = parseInt(modal.rows);
+    const seats_per_row = parseInt(modal.seats_per_row);
+
+    if (!hall_no || !block_name || isNaN(floor) || isNaN(capacity) || capacity < 1) {
+      showToast('Please fill all required fields correctly.', 'error'); return;
     }
 
-    const list = getData<Hall>('halls');
-    if (!modal.isEdit) {
-      if (list.find(h => h.hall_no === hall_no)) { showToast('Hall number already exists!', 'error'); return; }
-      list.push({ hall_no, block, floor, capacity });
-      showToast(`Hall ${hall_no} added!`, 'success');
-    } else {
-      const idx = list.findIndex(h => h.hall_no === hall_no);
-      if (idx !== -1) list[idx] = { hall_no, block, floor, capacity };
-      showToast(`Hall ${hall_no} updated!`, 'success');
+    try {
+      const method = isEdit ? 'PUT' : 'POST';
+      const url = isEdit ? `${API_BASE}/halls/${id}` : `${API_BASE}/halls`;
+      const payload = { hall_no, block_name, floor, capacity, rows, seats_per_row };
+
+      const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        showToast(err.error || 'Failed to save hall.', 'error');
+        return;
+      }
+
+      showToast(`Hall ${hall_no} ${isEdit ? 'updated' : 'added'}!`, 'success');
+      loadHalls();
+      closeModal();
+    } catch (err) {
+      showToast('API error.', 'error');
     }
-    setData('halls', list);
-    loadHalls();
-    closeModal();
   };
 
-  const deleteHall = (hall_no: string) => {
-    if (!confirm(`Delete hall ${hall_no}?`)) return;
-    setData('halls', getData<Hall>('halls').filter(h => h.hall_no !== hall_no));
-    showToast('Hall deleted.', 'warning');
-    loadHalls();
+  const deleteHall = async (id: string | undefined, hall_no: string) => {
+    if (!id || !confirm(`Delete hall ${hall_no}?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/halls/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Hall deleted.', 'warning');
+        loadHalls();
+      }
+    } catch (err) {
+      showToast('Error deleting hall.', 'error');
+    }
   };
 
   return (
@@ -104,7 +140,7 @@ const Halls = () => {
                       <td style={{ padding: '10px 14px', fontSize: 13 }}>{i + 1}</td>
                       <td style={{ padding: '10px 14px', fontSize: 13 }}><strong>{h.hall_no}</strong></td>
                       <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <span style={{ background: '#e0f5f7', color: '#2c8089', padding: '2px 8px', borderRadius: 10, fontWeight: 600, fontSize: 11 }}>Block {h.block}</span>
+                        <span style={{ background: '#e0f5f7', color: '#2c8089', padding: '2px 8px', borderRadius: 10, fontWeight: 600, fontSize: 11 }}>Block {h.block_name}</span>
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: 13 }}>Floor {h.floor}</td>
                       <td style={{ padding: '10px 14px', fontSize: 13 }}>
@@ -113,7 +149,7 @@ const Halls = () => {
                       <td style={{ padding: '10px 14px', fontSize: 13 }}>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="btn-edit" onClick={() => openEdit(h)}>✏️ Edit</button>
-                          <button className="btn-delete" onClick={() => deleteHall(h.hall_no)}>🗑️ Delete</button>
+                          <button className="btn-delete" onClick={() => deleteHall(h.id, h.hall_no)}>🗑️ Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -144,7 +180,7 @@ const Halls = () => {
                 </div>
                 <div className="form-group">
                   <label>Block *</label>
-                  <select value={modal.block} onChange={e => setModal(m => ({ ...m, block: e.target.value }))}>
+                  <select value={modal.block_name} onChange={e => setModal(m => ({ ...m, block_name: e.target.value }))}>
                     <option value="">Select Block</option>
                     {BLOCKS.map(b => <option key={b}>{b}</option>)}
                   </select>
@@ -158,6 +194,16 @@ const Halls = () => {
                   <label>Capacity *</label>
                   <input type="number" placeholder="e.g. 40" min={1} max={200} value={modal.capacity}
                     onChange={e => setModal(m => ({ ...m, capacity: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label>Rows</label>
+                  <input type="number" min={1} max={50} value={modal.rows}
+                    onChange={e => setModal(m => ({ ...m, rows: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label>Seats per row</label>
+                  <input type="number" min={1} max={20} value={modal.seats_per_row}
+                    onChange={e => setModal(m => ({ ...m, seats_per_row: e.target.value }))} />
                 </div>
               </div>
             </div>

@@ -5,21 +5,27 @@
 
 /* ── Types ────────────────────────────────────── */
 export interface Student {
+  id?: string;
   reg_no: string;
   name: string;
   dept: string;
   year: number;
+  semester?: number;
+  phone?: string;
 }
 
 export interface Hall {
+  id?: string;
   hall_no: string;
-  block: string;
+  block_name: string;
   floor: number;
   capacity: number;
+  rows?: number;
+  seats_per_row?: number;
 }
 
 export interface ExamSchedule {
-  id: number;
+  id?: string;
   exam_date: string;
   dept: string;
   year: number;
@@ -102,21 +108,21 @@ export function seedData(): void {
   ];
 
   const halls: Hall[] = [
-    { hall_no: 'H101', block: 'A', floor: 1, capacity: 40 },
-    { hall_no: 'H102', block: 'A', floor: 1, capacity: 40 },
-    { hall_no: 'H201', block: 'B', floor: 2, capacity: 30 },
-    { hall_no: 'H202', block: 'B', floor: 2, capacity: 30 },
-    { hall_no: 'H301', block: 'C', floor: 3, capacity: 50 },
+    { hall_no: 'H101', block_name: 'A', floor: 1, capacity: 40 },
+    { hall_no: 'H102', block_name: 'A', floor: 1, capacity: 40 },
+    { hall_no: 'H201', block_name: 'B', floor: 2, capacity: 30 },
+    { hall_no: 'H202', block_name: 'B', floor: 2, capacity: 30 },
+    { hall_no: 'H301', block_name: 'C', floor: 3, capacity: 50 },
   ];
 
   const exam_schedule: ExamSchedule[] = [
-    { id: 1, exam_date: '2026-03-20', dept: 'CSE',  year: 1, subject: 'Data Structures' },
-    { id: 2, exam_date: '2026-03-20', dept: 'IT',   year: 1, subject: 'Programming in C' },
-    { id: 3, exam_date: '2026-03-20', dept: 'ECE',  year: 2, subject: 'Digital Electronics' },
-    { id: 4, exam_date: '2026-03-20', dept: 'EEE',  year: 2, subject: 'Circuit Theory' },
-    { id: 5, exam_date: '2026-03-21', dept: 'MECH', year: 3, subject: 'Thermodynamics' },
-    { id: 6, exam_date: '2026-03-21', dept: 'CIVIL',year: 3, subject: 'Structural Analysis' },
-    { id: 7, exam_date: '2026-03-21', dept: 'CSE',  year: 3, subject: 'Operating Systems' },
+    { id: "1", exam_date: '2026-03-20', dept: 'CSE',  year: 1, subject: 'Data Structures' },
+    { id: "2", exam_date: '2026-03-20', dept: 'IT',   year: 1, subject: 'Programming in C' },
+    { id: "3", exam_date: '2026-03-20', dept: 'ECE',  year: 2, subject: 'Digital Electronics' },
+    { id: "4", exam_date: '2026-03-20', dept: 'EEE',  year: 2, subject: 'Circuit Theory' },
+    { id: "5", exam_date: '2026-03-21', dept: 'MECH', year: 3, subject: 'Thermodynamics' },
+    { id: "6", exam_date: '2026-03-21', dept: 'CIVIL',year: 3, subject: 'Structural Analysis' },
+    { id: "7", exam_date: '2026-03-21', dept: 'CSE',  year: 3, subject: 'Operating Systems' },
   ];
 
   setData('students', students);
@@ -218,7 +224,7 @@ export function generateAllocation(examDate: string): Allocation | { error: stri
     if (hallStudents.length > 0) {
       allocation.push({
         hall_no: hall.hall_no,
-        block: hall.block,
+        block: hall.block_name,
         floor: hall.floor,
         capacity: hall.capacity,
         allocated: hallStudents.length,

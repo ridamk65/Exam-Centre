@@ -1,0 +1,121 @@
+// Exam Seating System — Prisma Schema
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+//  USER (Admin / Staff managing the system)
+// ─────────────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String                       // hashed with bcrypt
+  role      UserRole @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+// ─────────────────────────────────────────────
+//  STUDENT
+// ─────────────────────────────────────────────
+model Student {
+  id          String   @id @default(uuid())
+  reg_no      String   @unique
+  name        String
+  dept        String
+  year        Int
+  semester    Int
+  phone       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  allocations Allocation[]
+
+  @@map("students")
+}
+
+// ─────────────────────────────────────────────
+//  EXAM HALL
+// ─────────────────────────────────────────────
+model Hall {
+  id            String   @id @default(uuid())
+  hall_no       String   @unique
+  block_name    String
+  floor         Int
+  capacity      Int
+  rows          Int
+  seats_per_row Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  allocations Allocation[]
+
+  @@map("halls")
+}
+
+// ─────────────────────────────────────────────
+//  EXAM SCHEDULE
+// ─────────────────────────────────────────────
+model ExamSchedule {
+  id          String   @id @default(uuid())
+  subjectCode String
+  subjectName String
+  examDate    DateTime
+  startTime   String
+  endTime     String
+  semester    Int
+  branch      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  allocations Allocation[]
+
+  @@map("exam_schedules")
+}
+
+// ─────────────────────────────────────────────
+//  ALLOCATION  (core join table)
+// ─────────────────────────────────────────────
+model Allocation {
+  id             String       @id @default(uuid())
+
+  student        Student      @relation(fields: [studentId], references: [id])
+  studentId      String
+
+  hall           Hall         @relation(fields: [hallId], references: [id])
+  hallId         String
+
+  examSchedule   ExamSchedule @relation(fields: [examScheduleId], references: [id])
+  examScheduleId String
+
+  seatNumber     Int
+  rowNumber      Int
+  columnNumber   Int
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // One student can only have one seat per exam
+  @@unique([studentId, examScheduleId])
+  // One seat in a hall can only be assigned once per exam
+  @@unique([hallId, examScheduleId, seatNumber])
+
+  @@map("allocations")
+}

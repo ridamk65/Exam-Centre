@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
-import {
-  getData, setData, seedData, deptClass, yearClass,
-  type Student,
-} from '../utils/data';
+import { deptClass, yearClass, type Student } from '../utils/data';
+
+const API_BASE = 'http://localhost:3000/api';
 
 interface ModalState {
   open: boolean;
   isEdit: boolean;
+  id?: string;
   reg_no: string;
   name: string;
   dept: string;
   year: string;
+  semester: string;
+  phone: string;
 }
 
 const DEPTS = ['CSE', 'ECE', 'MECH', 'IT', 'EEE', 'CIVIL', 'BME'];
@@ -24,16 +26,25 @@ const Students = () => {
   const [filterDept, setFilterDept] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [modal, setModal] = useState<ModalState>({
-    open: false, isEdit: false, reg_no: '', name: '', dept: '', year: '',
+    open: false, isEdit: false, id: '', reg_no: '', name: '', dept: '', year: '', semester: '1', phone: ''
   });
   const { showToast, ToastContainer } = useToast();
 
   useEffect(() => {
-    seedData();
     loadStudents();
   }, []);
 
-  const loadStudents = () => setStudents(getData<Student>('students'));
+  const loadStudents = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/students`);
+      if (res.ok) {
+        const data = await res.json();
+        setStudents(data);
+      }
+    } catch (err) {
+      showToast('Failed to load students from API.', 'error');
+    }
+  };
 
   const filtered = students.filter(s => {
     const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.reg_no.toLowerCase().includes(search.toLowerCase());
@@ -42,44 +53,86 @@ const Students = () => {
     return matchSearch && matchDept && matchYear;
   });
 
-  const openAdd = () => setModal({ open: true, isEdit: false, reg_no: '', name: '', dept: '', year: '' });
-  const openEdit = (s: Student) => setModal({ open: true, isEdit: true, reg_no: s.reg_no, name: s.name, dept: s.dept, year: String(s.year) });
+  const openAdd = () => setModal({ open: true, isEdit: false, id: '', reg_no: '', name: '', dept: '', year: '', semester: '1', phone: '' });
+  const openEdit = (s: Student) => setModal({ 
+    open: true, isEdit: true, id: s.id, reg_no: s.reg_no, name: s.name, dept: s.dept, 
+    year: String(s.year), semester: String(s.semester || '1'), phone: s.phone || '' 
+  });
   const closeModal = () => setModal(m => ({ ...m, open: false }));
 
-  const saveStudent = () => {
-    const { reg_no, name, dept, year, isEdit } = modal;
+  const saveStudent = async () => {
+    const { id, reg_no, name, dept, year, semester, phone, isEdit } = modal;
     const cleanReg = reg_no.trim();
     const cleanName = name.trim().toUpperCase();
     const yearNum = parseInt(year);
-    if (!cleanReg || !cleanName || !dept || !yearNum) { showToast('Please fill all required fields.', 'error'); return; }
-
-    const list = getData<Student>('students');
-    if (!isEdit) {
-      if (list.find(s => s.reg_no === cleanReg)) { showToast('Register number already exists!', 'error'); return; }
-      list.push({ reg_no: cleanReg, name: cleanName, dept, year: yearNum });
-      showToast(`Student ${cleanName} added successfully!`, 'success');
-    } else {
-      const idx = list.findIndex(s => s.reg_no === cleanReg);
-      if (idx !== -1) list[idx] = { reg_no: cleanReg, name: cleanName, dept, year: yearNum };
-      showToast(`Student ${cleanName} updated!`, 'success');
+    const semNum = parseInt(semester);
+    
+    if (!cleanReg || !cleanName || !dept || !yearNum || !semNum || !phone) { 
+      showToast('Please fill all required fields.', 'error'); 
+      return; 
     }
-    setData('students', list);
-    loadStudents();
-    closeModal();
+
+    try {
+      const method = isEdit ? 'PUT' : 'POST';
+      const url = isEdit ? `${API_BASE}/students/${id}` : `${API_BASE}/students`;
+      
+      const payload = { 
+        reg_no: cleanReg, name: cleanName, dept, year: yearNum, semester: semNum, phone 
+      };
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        showToast(err.error || 'Failed to save student.', 'error');
+        return;
+      }
+
+      showToast(`Student ${cleanName} ${isEdit ? 'updated' : 'added'}!`, 'success');
+      loadStudents();
+      closeModal();
+    } catch (err) {
+      showToast('API error while saving student.', 'error');
+    }
   };
 
-  const deleteStudent = (reg_no: string) => {
-    if (!confirm(`Delete student ${reg_no}?`)) return;
-    setData('students', getData<Student>('students').filter(s => s.reg_no !== reg_no));
-    showToast('Student deleted.', 'warning');
-    loadStudents();
+  const deleteStudent = async (id: string | undefined, reg_no: string) => {
+    if (!id || !confirm(`Delete student ${reg_no}?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/students/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Student deleted.', 'warning');
+        loadStudents();
+      }
+    } catch (err) {
+      showToast('API error while deleting student.', 'error');
+    }
   };
 
-  const updateAllYears = () => {
+  const updateAllYears = async () => {
     if (!confirm('Promote all students by 1 year? (4th year remain). Proceed?')) return;
-    setData('students', getData<Student>('students').map(s => ({ ...s, year: Math.min(s.year + 1, 4) })));
-    showToast('All student years updated! 🎓', 'success');
-    loadStudents();
+    try {
+      // In a real app, this should be a bulk API. For now, we update individually.
+      let count = 0;
+      for (const s of students) {
+        if (s.year < 4 && s.id) {
+          await fetch(`${API_BASE}/students/${s.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...s, year: s.year + 1 })
+          });
+          count++;
+        }
+      }
+      showToast(`Updated ${count} students! 🎓`, 'success');
+      loadStudents();
+    } catch (err) {
+      showToast('Error updating years.', 'error');
+    }
   };
 
   const depts = [...new Set(students.map(s => s.dept))];
@@ -159,7 +212,7 @@ const Students = () => {
                       <td style={{ padding: '10px 14px', fontSize: 13 }}>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button className="btn-edit" onClick={() => openEdit(s)}>✏️ Edit</button>
-                          <button className="btn-delete" onClick={() => deleteStudent(s.reg_no)}>🗑️ Delete</button>
+                          <button className="btn-delete" onClick={() => deleteStudent(s.id, s.reg_no)}>🗑️ Delete</button>
                         </div>
                       </td>
                     </tr>
@@ -195,7 +248,7 @@ const Students = () => {
                   <input type="text" placeholder="Full name in CAPS" value={modal.name}
                     onChange={e => setModal(m => ({ ...m, name: e.target.value }))} />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
                   <label>Department *</label>
                   <select value={modal.dept} onChange={e => setModal(m => ({ ...m, dept: e.target.value }))}>
                     <option value="">Select Department</option>
@@ -208,6 +261,16 @@ const Students = () => {
                     <option value="">Select Year</option>
                     {YEARS.map(y => <option key={y} value={y}>{y}{['st','nd','rd','th'][y-1]} Year</option>)}
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Semester *</label>
+                  <input type="number" min="1" max="8" placeholder="e.g. 6" value={modal.semester}
+                    onChange={e => setModal(m => ({ ...m, semester: e.target.value }))} />
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Phone Number *</label>
+                  <input type="text" placeholder="10-digit phone number" value={modal.phone}
+                    onChange={e => setModal(m => ({ ...m, phone: e.target.value }))} />
                 </div>
               </div>
             </div>

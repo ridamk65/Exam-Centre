@@ -1,0 +1,12 @@
+[
+  {
+    "directory": "d:\\-EduVault-X\\hardware",
+    "command": "clang -O0 -Wall -xc++ rfid_auth.ino",
+    "file": "d:\\-EduVault-X\\hardware\\rfid_auth.ino"
+  },
+  {
+    "directory": "d:\\-EduVault-X\\sketch_mar17a",
+    "command": "clang -O0 -Wall -xc++ sketch_mar17a.ino",
+    "file": "d:\\-EduVault-X\\sketch_mar17a\\sketch_mar17a.ino"
+  }
+]

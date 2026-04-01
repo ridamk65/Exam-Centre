@@ -5,14 +5,31 @@ const crypto = require("crypto");
 const { recordAccess } = require("../services/blockchainService");
 
 exports.verifyAccess = async (req, res) => {
+    const API_KEY = "eduvault_secure";
+
+    if (req.headers["x-api-key"] !== API_KEY) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized API access"
+        });
+    }
+
     const { fingerprintId, faceEncoding, paperData } = req.body;
+
+    if (!fingerprintId || fingerprintId.length < 5) {
+        return res.status(400).json({ error: "Invalid UID" });
+    }
 
     db.get(
         "SELECT * FROM users WHERE fingerprintId = ?",
         [fingerprintId],
         async (err, user) => {
-            if (err || !user) {
-                return res.status(401).json({ message: "User not found" });
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            if (!user) {
+                console.log("❌ Unauthorized access:", fingerprintId);
+                return res.status(403).json({ success: false, message: "Access Denied" });
             }
 
             if (user.faceEncoding !== faceEncoding) {

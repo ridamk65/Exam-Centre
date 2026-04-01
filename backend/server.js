@@ -24,9 +24,8 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"]
 }));
 app.use(rateLimit({
-    windowMs: 15 * 60 * 1000,                          // 15 minutes
-    max: 100,                                           // 100 requests per window
-    message: { message: "Too many requests, slow down." }
+  windowMs: 60 * 1000,
+  max: 10
 }));
 
 // --- Body Parsing ---

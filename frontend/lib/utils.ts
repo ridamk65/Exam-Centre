@@ -28,7 +28,7 @@ export function formatDate(dateString: string): string {
 /**
  * Convert data to CSV format
  */
-export function convertToCSV(data: any[]): string {
+export function convertToCSV(data: Record<string, string | number | boolean | null>[]): string {
     if (data.length === 0) return '';
 
     const headers = Object.keys(data[0]);

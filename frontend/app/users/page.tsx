@@ -8,8 +8,15 @@ import { Card } from '@/components/ui/Card';
 import toast from 'react-hot-toast';
 import { QRCodeCanvas } from 'qrcode.react';
 
+interface User {
+    id: string;
+    name: string;
+    role: string;
+    fingerprintId: string;
+}
+
 export default function UsersPage() {
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showQR, setShowQR] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -31,6 +38,10 @@ export default function UsersPage() {
 
         fetchUsers();
     }, []);
+
+    if (isLoading) {
+        return <div className="p-8 text-center text-[var(--color-text-muted)] animate-pulse">Loading users...</div>;
+    }
 
     const handleAddUser = async () => {
         if (!newUser.name || !newUser.fingerprintId) {
@@ -56,7 +67,7 @@ export default function UsersPage() {
             } else {
                 toast.error(data.error || 'Failed to register user');
             }
-        } catch (error) {
+        } catch {
             toast.error('Registration failed');
         }
     };

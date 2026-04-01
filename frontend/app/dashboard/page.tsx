@@ -7,8 +7,15 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
+interface DashboardStats {
+    totalUsers: number | string;
+    verifiedLogs: number | string;
+    lastAccess: string | null;
+    chartData: Array<{ date: string; accesses: number }>;
+}
+
 export default function DashboardPage() {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {

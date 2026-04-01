@@ -8,8 +8,18 @@ import { Card } from '@/components/ui/Card';
 import { formatDate, truncateHash, getStatusColor, convertToCSV, downloadFile } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
+interface LogEntry {
+    id: string;
+    userName: string;
+    user: string;
+    action: string;
+    timestamp: string;
+    status: string;
+    paperHash: string;
+}
+
 export default function LogsPage() {
-    const [logs, setLogs] = useState<any[]>([]);
+    const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'granted' | 'denied'>('all');
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
@@ -36,6 +46,10 @@ export default function LogsPage() {
         return log.status.toLowerCase() === filter;
     });
 
+    if (isLoading) {
+        return <div className="p-8 text-center text-[var(--color-text-muted)] animate-pulse">Loading logs...</div>;
+    }
+
     const handleVerify = async (hash: string) => {
         try {
             const response = await fetch('/api/verify', {
@@ -51,7 +65,7 @@ export default function LogsPage() {
             } else {
                 toast.error('Hash verification failed');
             }
-        } catch (error) {
+        } catch {
             toast.error('Verification failed');
         }
     };
@@ -149,7 +163,7 @@ export default function LogsPage() {
             {/* Logs Table */}
             <div className="animate-fade-in">
                 <Table headers={['User', 'Action', 'Timestamp', 'Status', 'Paper Hash', 'Actions']}>
-                    {filteredLogs.map((log, index) => (
+                    {filteredLogs.map((log) => (
                         <TableRow
                             key={log.id}
                             onClick={() => setExpandedRow(expandedRow === log.id ? null : log.id)}

@@ -81,6 +81,7 @@ void sendToBackend(String uid) {
 
     http.begin(client, serverUrl);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("x-api-key", "eduvault_secure");
 
     int httpCode = http.POST(json);
 

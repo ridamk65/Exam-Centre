@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { MOCK_LOGS } from '@/lib/constants';
 
-export async function GET(request: Request) {
+export async function GET() {
     try {
         // In production, this would fetch from blockchain
         // For now, return mock data

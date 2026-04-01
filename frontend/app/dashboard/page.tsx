@@ -21,7 +21,14 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/auth/stats');
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('http://localhost:5000/api/auth/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 setStats(data);
             } catch (error) {
@@ -42,7 +49,7 @@ export default function DashboardPage() {
     const totalUsers = stats.totalUsers;
     const verifiedLogs = stats.verifiedLogs;
     const lastAccessTime = stats.lastAccess ? formatDate(stats.lastAccess).split(',')[1].trim() : 'No Data';
-    const chartData = stats.chartData.length > 0 ? stats.chartData : [
+    const chartData = stats.chartData && stats.chartData.length > 0 ? stats.chartData : [
         { date: 'No Data', accesses: 0 }
     ];
 

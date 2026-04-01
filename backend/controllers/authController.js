@@ -5,15 +5,6 @@ const crypto = require("crypto");
 const { recordAccess } = require("../services/blockchainService");
 
 exports.verifyAccess = async (req, res) => {
-    const API_KEY = "eduvault_secure";
-
-    if (req.headers["x-api-key"] !== API_KEY) {
-        return res.status(401).json({
-            success: false,
-            message: "Unauthorized API access"
-        });
-    }
-
     const { fingerprintId, faceEncoding, paperData } = req.body;
 
     if (!fingerprintId || fingerprintId.length < 5) {
@@ -41,28 +32,29 @@ exports.verifyAccess = async (req, res) => {
                 .update(paperData)
                 .digest("hex");
 
+            let txHash = null;
             try {
-                const txHash = await recordAccess(user.id.toString(), paperHash, "enter");
-
-                db.run(
-                    `INSERT INTO access_logs (userId, paperHash, action, blockchainTx)
-             VALUES (?, ?, ?, ?)`,
-                    [user.id, paperHash, "enter", txHash],
-                    function (err) {
-                        if (err) {
-                            return res.status(500).json({ error: err.message });
-                        }
-                        res.json({
-                            success: true,
-                            paperHash,
-                            txHash
-                        });
-                    }
-                );
-
+                txHash = await recordAccess(user.id.toString(), paperHash, "enter");
             } catch (blockErr) {
-                res.status(500).json({ error: blockErr.message });
+                console.warn(`[BLOCKCHAIN-WARN] Blockchain unavailable, logging without txHash: ${blockErr.message}`);
             }
+
+            db.run(
+                `INSERT INTO access_logs (userId, paperHash, action, blockchainTx)
+             VALUES (?, ?, ?, ?)`,
+                [user.id, paperHash, "enter", txHash],
+                function (err) {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    res.json({
+                        success: true,
+                        paperHash,
+                        txHash,
+                        blockchainRecorded: !!txHash
+                    });
+                }
+            );
         }
     );
 };

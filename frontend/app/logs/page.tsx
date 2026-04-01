@@ -27,9 +27,13 @@ export default function LogsPage() {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/auth/logs');
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('http://localhost:5000/api/auth/logs', {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                setLogs(data);
+                setLogs(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error('Failed to fetch logs:', error);
                 toast.error('Failed to load access logs');

@@ -25,9 +25,13 @@ export default function UsersPage() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/auth/users');
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('http://localhost:5000/api/auth/users', {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                setUsers(data);
+                setUsers(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error('Failed to fetch users:', error);
                 toast.error('Failed to load users');
@@ -50,9 +54,13 @@ export default function UsersPage() {
         }
 
         try {
+            const token = localStorage.getItem('adminToken');
             const response = await fetch('http://localhost:5000/api/auth/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
                 body: JSON.stringify(newUser),
             });
 

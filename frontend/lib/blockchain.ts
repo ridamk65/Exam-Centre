@@ -50,6 +50,7 @@ export async function storePaperHash(paperHash: string, metadata: Record<string,
  */
 export async function verifyPaperHash(_paperHash: string): Promise<{ valid: boolean; timestamp?: string; error?: string }> {
     try {
+        console.log(`Verifying: ${_paperHash}`);
         // Mock implementation - replace with actual smart contract query
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
 
@@ -73,6 +74,7 @@ export async function verifyPaperHash(_paperHash: string): Promise<{ valid: bool
  */
 export async function fetchBlockchainLogs(_limit: number = 50): Promise<Record<string, unknown>[]> {
     try {
+        console.log(`Fetching logs with limit: ${_limit}`);
         // Mock implementation - replace with actual event log fetching
         await new Promise(resolve => setTimeout(resolve, 500));
 

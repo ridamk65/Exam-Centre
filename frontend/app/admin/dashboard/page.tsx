@@ -42,7 +42,7 @@ export default function AdminDashboardPage() {
         } else {
             setTimeout(() => setAuthenticated(true), 0);
         }
-        setTime(new Date().toLocaleTimeString());
+        setTimeout(() => setTime(new Date().toLocaleTimeString()), 0);
         const t = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
         return () => clearInterval(t);
     }, [router]);

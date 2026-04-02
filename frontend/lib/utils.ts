@@ -1,5 +1,3 @@
-import crypto from 'crypto';
-
 /**
  * Generate SHA-256 hash from file content
  */

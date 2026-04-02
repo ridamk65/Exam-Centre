@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 
+// Routes that should NOT render the Navbar + Sidebar shell
 const NO_SHELL_ROUTES = ['/', '/admin/login', '/admin/dashboard', '/login'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

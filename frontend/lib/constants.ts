@@ -23,6 +23,8 @@ export const ROUTES = {
   dashboard: '/dashboard',
   users: '/users',
   logs: '/logs',
+  upload: '/upload',
+  settings: '/settings',
 } as const;
 
 export const MOCK_USERS = [

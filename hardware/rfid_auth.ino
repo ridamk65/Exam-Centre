@@ -6,21 +6,27 @@
 /*
  * EduVault-X: RFID Hardware Authentication
  * ESP8266 + MFRC522
+ *
+ * ⚠️  CONFIGURE THESE BEFORE FLASHING:
  */
+
+// --- WiFi Configuration (edit before flashing) ---
+#define WIFI_SSID     "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+
+// --- Backend Configuration ---
+// Run `ipconfig` on your PC and set the IPv4 address here
+#define SERVER_IP   "192.168.x.x"
+#define SERVER_PORT "5000"
+#define SERVER_URL  "http://" SERVER_IP ":" SERVER_PORT "/api/auth/verify"
+
+// --- API Key (must match .env HARDWARE_API_KEY on backend) ---
+#define HARDWARE_API_KEY "eduvault_secure"
 
 #define SS_PIN D2
 #define RST_PIN D1
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
-
-// --- WiFi Configuration ---
-const char* ssid = "Pavi";
-const char* password = "Pavithra";
-
-// --- Backend Configuration ---
-// Based on your Serial Monitor (10.32.135.198), your PC IP is likely 10.32.135.231
-const char* serverUrl = "http://10.201.129.231:5000/api/auth/verify";
-
 WiFiClient client;
 
 void setup() {
@@ -29,7 +35,7 @@ void setup() {
   mfrc522.PCD_Init();
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.print("Connecting to WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
@@ -71,7 +77,7 @@ void sendToBackend(String uid) {
     HTTPClient http;
 
     Serial.println("📡 Sending request to backend...");
-    
+
     // Construct JSON payload
     String json = "{";
     json += "\"fingerprintId\":\"" + uid + "\",";
@@ -79,9 +85,11 @@ void sendToBackend(String uid) {
     json += "\"paperData\":\"Exam Access\"";
     json += "}";
 
-    http.begin(client, serverUrl);
+    http.begin(client, SERVER_URL);
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("x-api-key", "eduvault_secure");
+    http.addHeader("x-api-key", HARDWARE_API_KEY);
+    // Required: backend checks User-Agent for ESP8266/ESP32
+    http.addHeader("User-Agent", "ESP8266HTTPClient/1.0");
 
     int httpCode = http.POST(json);
 
@@ -93,11 +101,11 @@ void sendToBackend(String uid) {
     } else {
       Serial.print("❌ Connection Failed. Error: ");
       Serial.println(http.errorToString(httpCode).c_str());
-      
+
       if (httpCode == -1) {
-        Serial.println("👉 Troubleshooting Link: https://github.com/esp8266/Arduino/issues/3364");
+        Serial.println("👉 Troubleshooting: https://github.com/esp8266/Arduino/issues/3364");
         Serial.println("💡 Check if PC Firewall is blocking port 5000.");
-        Serial.println("💡 Use 'ipconfig' to verify PC IP matches serverUrl.");
+        Serial.println("💡 Use 'ipconfig' to verify PC IP matches SERVER_IP define.");
       }
     }
 

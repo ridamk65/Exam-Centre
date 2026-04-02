@@ -3,15 +3,16 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, ChevronLeft, ChevronRight, Upload, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: ROUTES.dashboard },
     { icon: Users, label: 'Users', href: ROUTES.users },
-
     { icon: FileText, label: 'Logs', href: ROUTES.logs },
+    { icon: Upload, label: 'Upload', href: '/upload' },
+    { icon: Settings, label: 'Settings', href: '/settings' },
 ];
 
 export function Sidebar() {

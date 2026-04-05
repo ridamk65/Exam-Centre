@@ -5,9 +5,15 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const xss = require("xss-clean");
 const morgan = require("morgan");
+const timeout = require("connect-timeout");
 require("./database/db"); // initialize SQLite
 
 const app = express();
+
+app.use(timeout("5s"));
+app.use((req, res, next) => {
+    if (!req.timedout) next();
+});
 
 // --- Log incoming requests ---
 app.use(morgan("dev"));
@@ -49,13 +55,13 @@ app.use("/api/papers", require("./routes/paperRoutes"));
 
 // --- 404 Unknown Route Handler ---
 app.use((req, res) => {
-    res.status(404).json({ error: "Route not found" });
+    res.status(404).json({ success: false, message: "Route not found" });
 });
 
-// --- Global Error Handler ---
 app.use((err, req, res, next) => {
     console.error(`[ERROR] ${err.message}`);
     res.status(err.status || 500).json({
+        success: false,
         message: err.message || "Internal Server Error"
     });
 });

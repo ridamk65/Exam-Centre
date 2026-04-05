@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-    Settings, Shield, Database, Wifi, Bell,
+    Shield, Database, Wifi, Bell,
     Save, RefreshCw, AlertTriangle, CheckCircle, Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';

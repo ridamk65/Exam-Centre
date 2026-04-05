@@ -1,6 +1,6 @@
-const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-module.exports = buildModule("ExamVaultModule", (m) => {
+export default buildModule("ExamVaultModule", (m) => {
   const audit = m.contract("ExamVaultAudit", []);
 
   return { audit };

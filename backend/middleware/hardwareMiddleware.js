@@ -6,7 +6,7 @@ const HARDWARE_API_KEY = process.env.HARDWARE_API_KEY || "eduvault_secure";
 exports.verifyApiKey = (req, res, next) => {
     if (req.headers["x-api-key"] !== HARDWARE_API_KEY) {
         console.warn(`[HARDWARE-BLOCKED] Invalid API key from ${req.ip}`);
-        return res.status(401).json({ error: "Unauthorized API access" });
+        return res.status(401).json({ success: false, message: "Unauthorized API access" });
     }
     next();
 };
@@ -20,7 +20,7 @@ exports.verifyHardwareDevice = (req, res, next) => {
 
     if (!isESP) {
         console.warn(`[HARDWARE-BLOCKED] Invalid device agent: "${userAgent}" from ${req.ip}`);
-        return res.status(403).json({ error: "Invalid device. Hardware access only." });
+        return res.status(403).json({ success: false, message: "Invalid device. Hardware access only." });
     }
     next();
 };

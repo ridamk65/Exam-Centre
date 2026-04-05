@@ -4,11 +4,13 @@ const db = require("../database/db");
 const crypto = require("crypto");
 const { recordAccess } = require("../services/blockchainService");
 
+let failedAttempts = 0; // Simple in-memory tracker for bonus alert system
+
 exports.verifyAccess = async (req, res) => {
     const { fingerprintId, faceEncoding, paperData } = req.body;
 
     if (!fingerprintId || fingerprintId.length < 5) {
-        return res.status(400).json({ error: "Invalid UID" });
+        return res.status(400).json({ success: false, message: "Invalid UID" });
     }
 
     db.get(
@@ -16,14 +18,18 @@ exports.verifyAccess = async (req, res) => {
         [fingerprintId],
         async (err, user) => {
             if (err) {
-                return res.status(500).json({ error: err.message });
+                return res.status(500).json({ success: false, message: err.message });
             }
             if (!user) {
+                failedAttempts++;
+                if (failedAttempts > 5) console.log("🚨 Possible attack detected! (Multiple unauthorized UID scans)");
                 console.log("❌ Unauthorized access:", fingerprintId);
                 return res.status(403).json({ success: false, message: "Access Denied" });
             }
 
             if (user.faceEncoding !== faceEncoding) {
+                failedAttempts++;
+                if (failedAttempts > 5) console.log("🚨 Possible attack detected! (Face mismatch sequence)");
                 return res.status(401).json({ message: "Face mismatch" });
             }
 
@@ -49,9 +55,12 @@ exports.verifyAccess = async (req, res) => {
                     }
                     res.json({
                         success: true,
+                        message: "Access granted",
+                        user: user.name,
                         paperHash,
                         txHash,
-                        blockchainRecorded: !!txHash
+                        blockchainRecorded: !!txHash,
+                        timestamp: new Date()
                     });
                 }
             );
@@ -59,20 +68,30 @@ exports.verifyAccess = async (req, res) => {
     );
 };
 
-exports.registerUser = (req, res) => {
-    const { name, fingerprintId, faceEncoding, role } = req.body;
+exports.registerUser = async (req, res) => {
+    const { name, fingerprintId, faceEncoding, role, password } = req.body;
+
+    let hashedPassword = null;
+    if (password) {
+        hashedPassword = await bcrypt.hash(password, 10);
+    }
 
     const query = `
-      INSERT INTO users (name, fingerprintId, faceEncoding, role)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO users (name, fingerprintId, faceEncoding, role, password)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
-    db.run(query, [name, fingerprintId, faceEncoding, role || "officer"], function (err) {
+    db.run(query, [name, fingerprintId, faceEncoding, role || "officer", hashedPassword], function (err) {
         if (err) {
-            return res.status(400).json({ error: err.message });
+            return res.status(400).json({ success: false, message: err.message });
         }
 
-        res.json({ success: true, userId: this.lastID });
+        res.json({ 
+            success: true, 
+            message: "User registered successfully", 
+            userId: this.lastID,
+            timestamp: new Date()
+        });
     });
 };
 
@@ -94,14 +113,20 @@ exports.adminLogin = (req, res) => {
             }
             if (!admin) {
                 console.log(`[AUTH-DEBUG] FAILED - Admin user not found with fingerprint [${fingerprintId}] and role [admin]`);
-                return res.status(400).json({ message: "Admin not found" });
+                return res.status(400).json({ success: false, message: "Admin not found" });
             }
 
             const isMatch = await bcrypt.compare(password, admin.password);
 
             if (!isMatch) {
-                return res.status(400).json({ message: "Invalid credentials" });
+                failedAttempts++;
+                if (failedAttempts > 5) {
+                    console.log("🚨 Possible attack detected! (Multiple admin password failures)");
+                }
+                return res.status(400).json({ success: false, message: "Invalid credentials" });
             }
+
+            failedAttempts = 0; // Reset on successful admin login
 
             const token = jwt.sign(
                 { id: admin.id, role: admin.role },
@@ -109,7 +134,13 @@ exports.adminLogin = (req, res) => {
                 { expiresIn: "1d" }
             );
 
-            res.json({ token });
+            res.json({ 
+                success: true, 
+                message: "Admin login successful", 
+                token,
+                user: admin.name,
+                timestamp: new Date()
+            });
         }
     );
 };

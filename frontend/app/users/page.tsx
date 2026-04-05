@@ -20,7 +20,7 @@ export default function UsersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [showQR, setShowQR] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
-    const [newUser, setNewUser] = useState({ name: '', fingerprintId: '', faceEncoding: 'RFID_USER', role: 'officer' });
+    const [newUser, setNewUser] = useState({ name: '', fingerprintId: '', faceEncoding: 'RFID_USER', role: 'officer', password: '' });
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -69,7 +69,7 @@ export default function UsersPage() {
             if (data.success) {
                 const addedUser = { ...newUser, id: data.userId };
                 setUsers([...users, addedUser]);
-                setNewUser({ name: '', fingerprintId: '', faceEncoding: 'RFID_USER', role: 'officer' });
+                setNewUser({ name: '', fingerprintId: '', faceEncoding: 'RFID_USER', role: 'officer', password: '' });
                 setShowAddForm(false);
                 toast.success('User registered successfully!');
             } else {
@@ -129,6 +129,15 @@ export default function UsersPage() {
                             <option value="admin">Admin</option>
                             <option value="faculty">Faculty</option>
                         </select>
+                        {newUser.role === 'admin' && (
+                            <input
+                                type="password"
+                                placeholder="Admin Password"
+                                value={newUser.password}
+                                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                className="px-4 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-[var(--color-text)]"
+                            />
+                        )}
                     </div>
                     <div className="flex gap-2">
                         <Button onClick={handleAddUser}>Save User</Button>

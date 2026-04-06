@@ -1,4 +1,0 @@
-If:
-  PathMatch: .*\.ino
-Diagnostics:
-  Suppress: "*"

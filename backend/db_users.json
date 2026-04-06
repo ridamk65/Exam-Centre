@@ -1,0 +1,26 @@
+[
+  {
+    "id": 2,
+    "name": "Hardware User",
+    "fingerprintId": "3D0D522D",
+    "faceEncoding": "RFID_USER",
+    "role": "officer",
+    "password": null
+  },
+  {
+    "id": 3,
+    "name": "ridam",
+    "fingerprintId": "53FFFF12",
+    "faceEncoding": "RFID_USER",
+    "role": "officer",
+    "password": null
+  },
+  {
+    "id": 4,
+    "name": "Super Admin",
+    "fingerprintId": "admin",
+    "faceEncoding": "ADMIN_FACE_PLACEHOLDER",
+    "role": "admin",
+    "password": "$2a$10$tMSId.f9t10OADcStUjSeutjJyXwbHKXOEMP0ETwG4daElvovEpsC"
+  }
+]

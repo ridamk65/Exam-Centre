@@ -97,6 +97,7 @@ exports.registerUser = async (req, res) => {
 
 // ADMIN LOGIN
 exports.adminLogin = (req, res) => {
+    console.log(`[AUTH-DEBUG] Received login request. Body:`, req.body);
     let { fingerprintId, password } = req.body;
     
     // Safety trim and lower-case comparison
@@ -115,7 +116,8 @@ exports.adminLogin = (req, res) => {
                 console.log(`[AUTH-DEBUG] FAILED - Admin user not found with fingerprint [${fingerprintId}] and role [admin]`);
                 return res.status(400).json({ success: false, message: "Admin not found" });
             }
-
+            
+            console.log(`[AUTH-DEBUG] Found admin in DB. ID: ${admin.id}. Verifying password...`);
             const isMatch = await bcrypt.compare(password, admin.password);
 
             if (!isMatch) {
@@ -123,10 +125,12 @@ exports.adminLogin = (req, res) => {
                 if (failedAttempts > 5) {
                     console.log("🚨 Possible attack detected! (Multiple admin password failures)");
                 }
+                console.log(`[AUTH-DEBUG] FAILED - Password mismatch for [${fingerprintId}]`);
                 return res.status(400).json({ success: false, message: "Invalid credentials" });
             }
 
             failedAttempts = 0; // Reset on successful admin login
+            console.log(`[AUTH-DEBUG] SUCCESS - Logging in admin: ${admin.name}`);
 
             const token = jwt.sign(
                 { id: admin.id, role: admin.role },

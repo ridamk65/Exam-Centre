@@ -6,12 +6,24 @@ export async function GET(req: Request) {
         let dateParam = searchParams.get("date");
 
         if (!dateParam) {
-            const latestSchedule = await prisma.examSchedule.findFirst({
-                orderBy: { examDate: 'desc' }
+            // Find the most recent date THAT HAS ALLOCATIONS
+            const latestAllocation = await prisma.allocation.findFirst({
+                orderBy: { createdAt: 'desc' },
+                include: { examSchedule: true }
             });
-            if (!latestSchedule) return Response.json(null);
-            dateParam = latestSchedule.examDate.toISOString().split('T')[0];
+            
+            if (latestAllocation) {
+                dateParam = latestAllocation.examSchedule.examDate.toISOString().split('T')[0];
+            } else {
+                // If no allocations yet, just show the next upcoming exam
+                const nextExam = await prisma.examSchedule.findFirst({
+                    orderBy: { examDate: 'asc' }
+                });
+                if (!nextExam) return Response.json([]);
+                dateParam = nextExam.examDate.toISOString().split('T')[0];
+            }
         }
+
 
         const targetDate = new Date(dateParam);
         
@@ -26,8 +38,9 @@ export async function GET(req: Request) {
         });
 
         if (!schedules.length) {
-            return Response.json(null); // No allocation history for this date
+            return Response.json([]); // No allocation history for this date
         }
+
 
         const scheduleIds = schedules.map(s => s.id);
 
@@ -66,15 +79,15 @@ export async function GET(req: Request) {
             });
         });
 
-        return Response.json({
+        return Response.json([{
             id: schedules[0].id,
             exam_date: dateParam,
             generated_at: allocations[0].createdAt.toISOString(),
             total_students: allocations.length,
             halls_used: Object.keys(hallGroups).length,
-            departments: schedules.map(s => `${s.branch} Y${Math.max(1, Math.floor(s.semester / 2))}`).join(', '),
+            departments: [...new Set(schedules.map(s => `${s.branch} Y${Math.max(1, Math.floor(s.semester / 2))}`))].join(', '),
             halls: Object.values(hallGroups)
-        });
+        }]);
 
     } catch (error: any) {
         return Response.json({ error: error.message }, { status: 500 });

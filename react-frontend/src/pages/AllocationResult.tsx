@@ -1,10 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
 import { 
   FileText, 
   ArrowLeft, 
-  CheckCircle2, 
   AlertCircle,
   FileSearch,
   Printer
@@ -13,9 +13,43 @@ import { Link } from 'react-router-dom';
 
 const API_BASE = '/api';
 
+const printStyles = `
+@media print {
+  body * {
+    visibility: hidden;
+    background: white !important;
+  }
+  #printable-content, #printable-content * {
+    visibility: visible;
+  }
+  #printable-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .no-print, .btn, .card-header {
+    display: none !important;
+  }
+  .badge {
+    border: 1px solid #ddd !important;
+    color: black !important;
+    background: transparent !important;
+  }
+  .table th {
+    background: #f0f0f0 !important;
+    color: black !important;
+  }
+}
+`;
+
 interface AllocationSummary {
     total_students: number;
-    halls: string[];
+    halls: any[];
     exam_date: string;
 }
 
@@ -46,40 +80,17 @@ const AllocationResult = () => {
         }
     };
 
-    const downloadPDF = async () => {
+    const downloadPDF = () => {
       if (!summary) return;
-      showToast('Generating official report...', 'info');
-      
-      try {
-        const res = await fetch(`${API_BASE}/allocations/generate?pdf=true`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ exam_date: summary.exam_date })
-        });
-        
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `Exam_Allocation_${summary.exam_date}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          showToast('Report downloaded successfully.', 'success');
-        } else {
-          showToast('Engine failed to export PDF.', 'error');
-        }
-      } catch (err) {
-        showToast('Official download interrupt.', 'error');
-      }
+      window.print();
     };
 
     return (
         <Layout>
+            <style>{printStyles}</style>
             <ToastContainer />
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+            <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
                 <div>
                     <h1 style={{ fontSize: 24, fontWeight: 800 }}>Dispatch & Official Reports</h1>
                     <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
@@ -110,10 +121,9 @@ const AllocationResult = () => {
                     <Link to="/allocation" className="btn btn-primary btn-sm" style={{ marginTop: 24 }}>Initiate Allocation</Link>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24 }}>
-                    {/* Report Preview */}
-                    <div className="card">
-                        <div className="card-header">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                    <div className="card" id="printable-content">
+                        <div className="card-header no-print">
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <FileText size={20} color="var(--primary)" />
                                 <span>Report Snapshot: {summary.exam_date}</span>
@@ -121,107 +131,91 @@ const AllocationResult = () => {
                             <span className="badge badge-success">Finalized & Validated</span>
                         </div>
                         <div className="card-body" style={{ background: 'var(--secondary-light)', padding: 40 }}>
-                             {/* Result Document Visualisation */}
                              <div style={{ 
                                 background: '#fff', 
                                 border: '1px solid var(--border-color)', 
                                 borderRadius: 12, 
                                 padding: 40,
                                 boxShadow: 'var(--shadow-md)',
-                                position: 'relative',
-                                minHeight: 400
+                                minHeight: 600
                              }}>
                                 <div style={{ textAlign: 'center', borderBottom: '2px solid var(--primary)', paddingBottom: 24, marginBottom: 32 }}>
                                     <h2 style={{ fontSize: 18, color: 'var(--primary)', marginBottom: 4 }}>SATHYABAMA INSTITUTE OF SCIENCE AND TECHNOLOGY</h2>
-                                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>OFFICIAL ALLOCATION REPORT</p>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px' }}>OFFICIAL SEATING ALLOTMENT</p>
                                 </div>
 
-                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 32 }}>
-                                     <div style={{ background: 'var(--secondary-light)', padding: 16, borderRadius: 8 }}>
-                                         <p style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Exam Reference Date</p>
-                                         <p style={{ fontSize: 14, fontWeight: 700 }}>{summary?.exam_date}</p>
-                                     </div>
-                                     <div style={{ background: 'var(--secondary-light)', padding: 16, borderRadius: 8 }}>
-                                         <p style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Generation Stamp</p>
-                                         <p style={{ fontSize: 14, fontWeight: 700 }}>{new Date().toLocaleString()}</p>
-                                     </div>
-                                 </div>
+                                 {(summary.halls || []).map((h: any, i: number) => (
+                                     <div key={i} style={{ marginBottom: 48, pageBreakAfter: 'always' }}>
+                                         <div style={{ 
+                                             display: 'flex', 
+                                             justifyContent: 'space-between', 
+                                             alignItems: 'end', 
+                                             borderBottom: '1px solid var(--primary)',
+                                             paddingBottom: 8,
+                                             marginBottom: 16
+                                         }}>
+                                             <div>
+                                                 <h3 style={{ margin: 0, color: 'var(--primary)' }}>Hall No: {h.hall_no}</h3>
+                                                 <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>Location: {h.block} • Floor {h.floor}</p>
+                                             </div>
+                                             <div style={{ textAlign: 'right' }}>
+                                                 <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)' }}>TOTAL SEATED: {h.allocated}</span>
+                                             </div>
+                                         </div>
 
-                                 <div className="table-wrapper">
-                                     <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase' }}>Utilisation Breakdown</p>
-                                     <table className="table" style={{ background: 'transparent' }}>
-                                         <thead>
-                                             <tr>
-                                                 <th style={{ background: 'transparent' }}>Infrastructure Asset</th>
-                                                 <th style={{ background: 'transparent', textAlign: 'right' }}>Authorised Access</th>
-                                             </tr>
-                                         </thead>
-                                         <tbody>
-                                             {(summary?.halls || []).map((h, i) => (
-                                                 <tr key={i}>
-                                                     <td style={{ fontWeight: 600 }}>Hall: {h}</td>
-                                                     <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontWeight: 700 }}>Authenticated</td>
+                                         <table className="table" style={{ fontSize: 12 }}>
+                                             <thead>
+                                                 <tr style={{ background: 'var(--secondary-light)' }}>
+                                                     <th style={{ width: 120 }}>Reg No.</th>
+                                                     <th>Student Name</th>
+                                                     <th style={{ width: 80 }}>Dept</th>
+                                                     <th style={{ width: 60, textAlign: 'center' }}>Seat</th>
                                                  </tr>
-                                             ))}
-                                         </tbody>
-                                     </table>
-                                 </div>
+                                             </thead>
+                                             <tbody>
+                                                 {(h.students || []).map((st: any, idx: number) => (
+                                                     <tr key={idx}>
+                                                         <td style={{ fontWeight: 700 }}>{st.reg_no}</td>
+                                                         <td>{st.name}</td>
+                                                         <td><span className="badge badge-primary" style={{ fontSize: 9 }}>{st.dept}</span></td>
+                                                         <td style={{ textAlign: 'center', fontWeight: 800 }}>{st.seat_no}</td>
+                                                     </tr>
+                                                 ))}
+                                             </tbody>
+                                         </table>
+                                     </div>
+                                 ))}
 
-                                 <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px dashed var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                     <p style={{ fontSize: 11, color: 'var(--text-light)' }}>Authenticated Distribution Record</p>
-                                     <div style={{ background: 'var(--secondary-light)', padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, color: 'var(--text-muted)' }}>PAGE 1 OF 1</div>
+                                 <div className="no-print" style={{ marginTop: 40, paddingTop: 20, borderTop: '1px dashed var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                     <p style={{ fontSize: 11, color: 'var(--text-light)' }}>Authenticated University Examination Record</p>
+                                     <div style={{ background: 'var(--secondary-light)', padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 800, color: 'var(--text-muted)' }}>SECURE DISPATCH</div>
                                  </div>
                               </div>
-                         </div>
-                     </div>
+                        </div>
+                    </div>
 
-                     {/* Metadata Sidebar */}
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                         <div className="card">
-                             <div className="card-header">📊 Payload Insights</div>
-                             <div className="card-body">
-                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                         <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Students</span>
-                                         <span style={{ fontSize: 13, fontWeight: 800 }}>{summary?.total_students}</span>
-                                     </div>
-                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                         <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Halls Allocated</span>
-                                         <span style={{ fontSize: 13, fontWeight: 800 }}>{summary?.halls.length || 0}</span>
-                                     </div>
-                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                         <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Utilisation Status</span>
-                                         <span className="badge badge-success">Optimal</span>
-                                     </div>
-                                 </div>
-                             </div>
-                         </div>
-
-                        <div className="card" style={{ background: 'var(--secondary)', color: '#fff' }}>
+                    <div className="no-print" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                        <div className="card">
+                            <div className="card-header">📊 Logistics Audit</div>
                             <div className="card-body">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                    <CheckCircle2 color="var(--primary)" size={20} />
-                                    <h4 style={{ color: '#fff', fontSize: 15 }}>Compliance Check</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Payload</span>
+                                        <span style={{ fontSize: 13, fontWeight: 800 }}>{summary.total_students} Students</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Active Halls</span>
+                                        <span style={{ fontSize: 13, fontWeight: 800 }}>{summary.halls?.length}</span>
+                                    </div>
                                 </div>
-                                <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                    <li style={{ fontSize: 12, display: 'flex', gap: 8, opacity: 0.8 }}>
-                                        <span style={{ color: 'var(--success)' }}>✔</span> Interleaving Verified
-                                    </li>
-                                    <li style={{ fontSize: 12, display: 'flex', gap: 8, opacity: 0.8 }}>
-                                        <span style={{ color: 'var(--success)' }}>✔</span> Capacity Guardrail OK
-                                    </li>
-                                    <li style={{ fontSize: 12, display: 'flex', gap: 8, opacity: 0.8 }}>
-                                        <span style={{ color: 'var(--success)' }}>✔</span> Register Sync Confirmed
-                                    </li>
-                                </ul>
                             </div>
                         </div>
 
                         <div className="card" style={{ background: 'var(--primary)', color: 'white', border: 'none' }}>
                             <div className="card-body" style={{ textAlign: 'center' }}>
-                                <p style={{ fontSize: 12, fontWeight: 600, opacity: 0.9, marginBottom: 16 }}>Need to audit specific student seatings?</p>
+                                <p style={{ fontSize: 12, fontWeight: 600, opacity: 0.9, marginBottom: 16 }}>Need to verify the master student list?</p>
                                 <button onClick={() => window.location.href='/students'} className="btn btn-secondary btn-sm" style={{ width: '100%', background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                    <FileSearch size={14} /> Audit Ledger
+                                    <FileSearch size={14} /> Master Roll
                                 </button>
                             </div>
                         </div>

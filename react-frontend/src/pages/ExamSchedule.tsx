@@ -7,8 +7,12 @@ import {
   Plus, 
   Edit3,
   Trash2,
-  Bookmark
+  Bookmark,
+  FileSpreadsheet
 } from 'lucide-react';
+
+import * as XLSX from 'xlsx';
+
 import { fmtDate } from '../utils/data';
 
 const API_BASE = '/api';
@@ -31,19 +35,38 @@ interface ModalState {
   subject: string;
 }
 
-const DEPTS = ['CSE', 'ECE', 'MECH', 'IT', 'EEE', 'CIVIL', 'BME'];
 const YEARS = [1, 2, 3, 4];
 
 const ExamSchedulePage = () => {
   const [schedules, setSchedules] = useState<ExamSchedule[]>([]);
+  const [dynamicDepts, setDynamicDepts] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [filterDate, setFilterDate] = useState('');
   const [modal, setModal] = useState<ModalState>({
     open: false, isEdit: false, id: '', exam_date: '', dept: '', year: '', subject: '',
   });
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+
+
   const { showToast, ToastContainer } = useToast();
 
-  useEffect(() => { loadSchedules(); }, []);
+  useEffect(() => { 
+    loadSchedules(); 
+    loadDepartments();
+  }, []);
+
+  const loadDepartments = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/students/departments`);
+      if (res.ok) {
+        const data = await res.json();
+        setDynamicDepts(data);
+      }
+    } catch (err) {
+      console.error('Failed to load depts');
+    }
+  };
 
   const loadSchedules = async () => {
     setLoading(true);
@@ -97,6 +120,51 @@ const ExamSchedulePage = () => {
     }
   };
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsBulkUploading(true);
+    const reader = new FileReader();
+    
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+          showToast('Excel file is empty.', 'error');
+          return;
+        }
+
+        // Send to bulk endpoint
+        const res = await fetch(`${API_BASE}/schedules/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: data })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          showToast(`Bulk Sync Complete: ${result.count} exams scheduled.`, 'success');
+          loadSchedules();
+        } else {
+          showToast('Bulk upload failed. Verify sheet format.', 'error');
+        }
+      } catch (err) {
+        showToast('Error parsing Excel file.', 'error');
+      } finally {
+        setIsBulkUploading(false);
+        if (e.target) e.target.value = '';
+      }
+    };
+    
+    reader.readAsBinaryString(file);
+  };
+
   const deleteSchedule = async (id: string, subject: string) => {
     if (!confirm(`Confirm: Delete exam schedule for ${subject}?`)) return;
     try {
@@ -121,8 +189,20 @@ const ExamSchedulePage = () => {
             Master calendar for university-wide examination dates and subject mapping.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}><Plus size={16} /> New Exam Schedule</button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <input 
+            type="file" accept=".xlsx, .xls, .csv" 
+            style={{ display: 'none' }} 
+            id="bulk-upload-input"
+            onChange={handleBulkUpload}
+          />
+          <label htmlFor="bulk-upload-input" className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+            {isBulkUploading ? 'Uploading...' : <><FileSpreadsheet size={16} /> Bulk Upload</>}
+          </label>
+          <button className="btn btn-primary" onClick={openAdd}><Plus size={16} /> New Exam Schedule</button>
+        </div>
       </div>
+
 
       <div className="card" style={{ marginBottom: 24 }}>
         <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -253,8 +333,9 @@ const ExamSchedulePage = () => {
                     value={modal.dept} onChange={e => setModal(m => ({ ...m, dept: e.target.value }))}
                   >
                     <option value="">Select Dept.</option>
-                    {DEPTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    {dynamicDepts.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
+
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Study Year</label>

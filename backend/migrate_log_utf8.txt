@@ -1,0 +1,71 @@
+﻿node.exe : warn The 
+configuration property 
+`package.json#prisma` is 
+deprecated and will be 
+removed in Prisma 7. 
+Please migrate to a 
+Prisma config file (e.g., 
+`prisma.config.ts`).
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (w  
+  arn The config...ma.c   
+ onfig.ts`).:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+For more information, 
+see: https://pris.ly/prism
+a-config
+
+Environment variables 
+loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-1-ap-southeast-2.pooler.supabase.com:5432"
+
+Drift detected: Your database schema is not in sync with your migration history.
+
+The following is a summary of the differences between the expected database schema given your migrations files, and the actual schema of the database.
+
+It should be understood as the set of changes to get from the expected schema to the actual schema.
+
+If you are running this the first time on an existing database, please make sure to read this documentation page:
+https://www.prisma.io/docs/guides/database/developing-with-prisma-migrate/troubleshooting-development
+
+[+] Added tables
+  - admin
+  - allocation
+  - exam_schedule
+  - halls
+  - students
+
+[*] Changed the `admin` table
+  [+] Added unique index on columns (username)
+
+[*] Changed the `allocation` table
+  [+] Added index on columns (exam_id)
+  [+] Added foreign key on columns (exam_id)
+  [+] Added foreign key on columns (hall_id)
+  [+] Added foreign key on columns (student_id)
+
+[*] Changed the `exam_schedule` table
+  [+] Added index on columns (exam_date)
+
+[*] Changed the `students` table
+  [+] Added index on columns (reg_no)
+  [+] Added unique index on columns (reg_no)
+
+We need to reset the "public" schema at "aws-1-ap-southeast-2.pooler.supabase.com:5432"
+
+You may use prisma migrate reset to drop the development database.
+All data will be lost.
+

@@ -3,10 +3,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
-        const dateParam = searchParams.get("date");
+        let dateParam = searchParams.get("date");
 
         if (!dateParam) {
-            return Response.json({ error: "date parameter is required" }, { status: 400 });
+            const latestSchedule = await prisma.examSchedule.findFirst({
+                orderBy: { examDate: 'desc' }
+            });
+            if (!latestSchedule) return Response.json(null);
+            dateParam = latestSchedule.examDate.toISOString().split('T')[0];
         }
 
         const targetDate = new Date(dateParam);

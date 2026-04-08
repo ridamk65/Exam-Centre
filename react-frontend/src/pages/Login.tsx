@@ -1,199 +1,183 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, User, ShieldCheck } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  Lock, 
+  User, 
+  Eye, 
+  EyeOff, 
+  ArrowRight,
+  GraduationCap,
+  Settings,
+  HelpCircle
+} from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 const Login = () => {
-  const [role, setRole] = useState<'admin' | 'student'>('admin');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+    const [role, setRole] = useState<'admin' | 'student'>('admin');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    const { showToast, ToastContainer } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username || !password) {
-      setError('Please enter both fields.');
-      return;
-    }
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        
+        setTimeout(() => {
+            if (role === 'admin') {
+                if (username === 'admin' && password === 'admin123') {
+                    localStorage.setItem('adminSession', 'true');
+                    showToast('Authenticated. Launching System Admin Dashboard...', 'success');
+                    setTimeout(() => navigate('/dashboard'), 800);
+                } else {
+                    showToast('Authentication failure: Incorrect credentials.', 'error');
+                }
+            } else {
+                if (username.trim()) {
+                    localStorage.setItem('studentSession', username);
+                    showToast('Identity Verified. Loading Student Portal...', 'success');
+                    setTimeout(() => navigate('/portal'), 800);
+                } else {
+                    showToast('Please enter your university registration ID.', 'warning');
+                }
+            }
+            setLoading(false);
+        }, 600);
+    };
 
-    setLoading(true);
-    setError('');
+    return (
+        <div style={{ 
+            height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundImage: 'url("/images/loginpage.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            position: 'relative', overflow: 'hidden'
+        }}>
+            {/* Overlay for readability */}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(123, 29, 34, 0.4)', backdropFilter: 'blur(2px)' }}></div>
+            
+            <ToastContainer />
+            
+            <div style={{ width: '100%', maxWidth: 440, padding: 20, zIndex: 10 }}>
+                {/* Brand Header */}
+                <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                   <div style={{ background: 'white', padding: '12px 24px', borderRadius: '12px', display: 'inline-block', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                      <img 
+                        src="/images/bbIHxTtnu6TeTwKHJ_4_W6.png" 
+                        alt="Sathyabama" 
+                        style={{ height: 54, objectFit: 'contain' }}
+                      />
+                   </div>
+                </div>
 
-    // Mock login logic
-    setTimeout(() => {
-      if (role === 'admin') {
-        if (username === 'admin' && password === 'admin123') {
-          localStorage.setItem('adminSession', JSON.stringify({ user: 'admin', name: 'EXAM CONTROLLER' }));
-          navigate('/dashboard');
-        } else {
-          setError('Invalid Admin ID or password.');
-          setLoading(false);
-        }
-      } else {
-        if (password === 'student123' || password === username.slice(-4)) {
-          localStorage.setItem('studentSession', JSON.stringify({ reg_no: username, name: 'Student' }));
-          navigate('/student-portal');
-        } else {
-          setError('Register Number or Password is incorrect.');
-          setLoading(false);
-        }
-      }
-    }, 800);
-  };
+                {/* Login Container */}
+                <div className="card" style={{ 
+                    padding: 40, border: '1px solid rgba(255,255,255,0.3)', 
+                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                    background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)'
+                }}>
+                    <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                        <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.5px' }}>Unified Exam Portal</h1>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 700, marginTop: 4 }}>System Authentication</p>
+                    </div>
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: "'Inter', sans-serif",
-      padding: 20
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: 400,
-        background: 'rgba(255, 255, 255, 0.98)',
-        borderRadius: 24,
-        padding: 40,
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Accent Bar */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 6,
-          background: 'linear-gradient(90deg, #831238, #c0392b)'
-        }} />
+                    {/* Role Selection */}
+                    <div style={{ 
+                        background: 'var(--secondary-light)', padding: 4, borderRadius: 12,
+                        display: 'flex', marginBottom: 32, border: '1px solid var(--border-color)'
+                    }}>
+                        <button 
+                            onClick={() => setRole('admin')}
+                            style={{ 
+                                flex: 1, padding: '10px', fontSize: 13, fontWeight: 700, borderRadius: 10,
+                                background: role === 'admin' ? '#fff' : 'transparent',
+                                color: role === 'admin' ? 'var(--primary)' : 'var(--text-muted)',
+                                border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                                boxShadow: role === 'admin' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                             }}
+                        >
+                            Academic Admin
+                        </button>
+                        <button 
+                            onClick={() => setRole('student')}
+                            style={{ 
+                                flex: 1, padding: '10px', fontSize: 13, fontWeight: 700, borderRadius: 10,
+                                background: role === 'student' ? '#fff' : 'transparent',
+                                color: role === 'student' ? 'var(--primary)' : 'var(--text-muted)',
+                                border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                                boxShadow: role === 'student' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+                             }}
+                        >
+                            Student Hub
+                        </button>
+                    </div>
 
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 56, height: 56, background: 'var(--maroon-light)',
-            borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px', color: 'var(--maroon)'
-          }}>
-            <ShieldCheck size={32} />
-          </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1a1a2e', margin: 0 }}>Portal Access</h1>
-          <p style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>Sathyabama Seating Allocation System</p>
+                    <form onSubmit={handleLogin}>
+                        <div className="form-group">
+                            <label className="form-label">{role === 'admin' ? 'Administrative Username' : 'University Reg. No.'}</label>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }}>
+                                    {role === 'admin' ? <User size={18} /> : <GraduationCap size={18} />}
+                                </div>
+                                <input 
+                                    type="text" className="form-control" style={{ height: 52, paddingLeft: 46, fontSize: 15, fontWeight: 600 }}
+                                    placeholder={role === 'admin' ? 'Enter admin username' : 'e.g. 43601001'}
+                                    value={username} onChange={e => setUsername(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {role === 'admin' && (
+                            <div className="form-group" style={{ marginBottom: 32 }}>
+                                <label className="form-label">Secure Password</label>
+                                <div style={{ position: 'relative' }}>
+                                    <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }}>
+                                        <Lock size={18} />
+                                    </div>
+                                    <input 
+                                        type={showPassword ? 'text' : 'password'} 
+                                        className="form-control" style={{ height: 52, paddingLeft: 46, paddingRight: 46, fontSize: 15 }}
+                                        placeholder="Enter secure password"
+                                        value={password} onChange={e => setPassword(e.target.value)}
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-light)', cursor: 'pointer' }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <button 
+                            className="btn btn-primary" 
+                            style={{ width: '100%', height: 54, fontSize: 16, fontWeight: 900, letterSpacing: '0.6px' }}
+                            disabled={loading}
+                        >
+                            {loading ? 'Validating...' : (role === 'admin' ? 'Initialise Secure Access' : 'Enter Student Portal')}
+                            {!loading && <ArrowRight size={18} style={{ marginLeft: 8 }} />}
+                        </button>
+                    </form>
+
+                    <div style={{ marginTop: 24, textAlign: 'center' }}>
+                        <a href="#" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none', fontWeight: 800 }}>Need assistance? Contact Support</a>
+                    </div>
+                </div>
+
+                {/* Footer Reference */}
+                <div style={{ marginTop: 32, textAlign: 'center' }}>
+                    <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 700, letterSpacing: '1px' }}>
+                        © 2026 SATHYABAMA INSTITUTE OF SCIENCE AND TECHNOLOGY
+                    </p>
+                </div>
+            </div>
         </div>
-
-        <form onSubmit={handleLogin}>
-          {/* Role Toggle */}
-          <div style={{
-            background: '#f1f5f9', padding: 4, borderRadius: 12, display: 'flex', marginBottom: 24
-          }}>
-            <button
-              type="button"
-              onClick={() => setRole('admin')}
-              style={{
-                flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                background: role === 'admin' ? '#fff' : 'transparent',
-                color: role === 'admin' ? 'var(--maroon)' : '#64748b',
-                boxShadow: role === 'admin' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >Admin</button>
-            <button
-              type="button"
-              onClick={() => setRole('student')}
-              style={{
-                flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                background: role === 'student' ? '#fff' : 'transparent',
-                color: role === 'student' ? 'var(--maroon)' : '#64748b',
-                boxShadow: role === 'student' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >Student</button>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8 }}>
-              {role === 'admin' ? 'Admin ID' : 'Register Number'}
-            </label>
-            <div style={{ position: 'relative' }}>
-              <User size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type="text"
-                placeholder={role === 'admin' ? "ID: admin" : "Your Reg No."}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                style={{
-                  width: '100%', padding: '12px 14px 12px 42px', border: '1px solid #e2e8f0',
-                  borderRadius: 12, fontSize: 14, outline: 'none', transition: 'all 0.2s'
-                }}
-                onFocus={e => (e.target.style.borderColor = 'var(--maroon)')}
-                onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
-              />
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder={role === 'admin' ? "admin123" : "student123"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{
-                  width: '100%', padding: '12px 42px 12px 42px', border: '1px solid #e2e8f0',
-                  borderRadius: 12, fontSize: 14, outline: 'none', transition: 'all 0.2s'
-                }}
-                onFocus={e => (e.target.style.borderColor = 'var(--maroon)')}
-                onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0
-                }}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div style={{
-              background: '#fff1f2', borderLeft: '4px solid #be123c', padding: '10px 14px',
-              borderRadius: 8, color: '#9f1239', fontSize: 12, fontWeight: 600, marginBottom: 20
-            }}>
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%', padding: 14, background: 'var(--maroon)', color: '#fff',
-              border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700,
-              cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
-              transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(131, 18, 56, 0.2)'
-            }}
-            onMouseEnter={e => !loading && (e.currentTarget.style.transform = 'translateY(-1px)')}
-            onMouseLeave={e => !loading && (e.currentTarget.style.transform = 'translateY(0)')}
-          >
-            {loading ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div style={{ textAlign: 'center', marginTop: 32, fontSize: 11, color: '#94a3b8', lineHeight: 1.6 }}>
-          Designed for Sathyabama Institute of Science and Technology<br />
-          © 2024 Examination Branch
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Login;

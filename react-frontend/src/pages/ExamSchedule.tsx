@@ -1,17 +1,30 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
-import {
-  deptClass, yearClass, fmtDate,
-  type ExamSchedule,
-} from '../utils/data';
+import { 
+  Calendar, 
+  BookOpen, 
+  Plus, 
+  Edit3,
+  Trash2,
+  Bookmark
+} from 'lucide-react';
+import { fmtDate } from '../utils/data';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = '/api';
+
+interface ExamSchedule {
+  id: string;
+  exam_date: string;
+  dept: string;
+  year: number;
+  subject: string;
+}
 
 interface ModalState {
   open: boolean;
   isEdit: boolean;
-  id: string | null;
+  id: string;
   exam_date: string;
   dept: string;
   year: string;
@@ -23,15 +36,17 @@ const YEARS = [1, 2, 3, 4];
 
 const ExamSchedulePage = () => {
   const [schedules, setSchedules] = useState<ExamSchedule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterDate, setFilterDate] = useState('');
   const [modal, setModal] = useState<ModalState>({
-    open: false, isEdit: false, id: null, exam_date: '', dept: '', year: '', subject: '',
+    open: false, isEdit: false, id: '', exam_date: '', dept: '', year: '', subject: '',
   });
   const { showToast, ToastContainer } = useToast();
 
   useEffect(() => { loadSchedules(); }, []);
 
   const loadSchedules = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/schedules`);
       if (res.ok) {
@@ -39,56 +54,59 @@ const ExamSchedulePage = () => {
         setSchedules(data);
       }
     } catch (err) {
-      showToast('Error loading schedules.', 'error');
+      showToast('System connectivity error.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const filtered = filterDate ? schedules.filter(s => s.exam_date === filterDate) : schedules;
   const uniqueDates = [...new Set(schedules.map(s => fmtDate(s.exam_date)))];
 
-  const openAdd = () => setModal({ open: true, isEdit: false, id: null, exam_date: '', dept: '', year: '', subject: '' });
-  const openEdit = (s: ExamSchedule) => setModal({ open: true, isEdit: true, id: s.id || null, exam_date: s.exam_date, dept: s.dept, year: String(s.year), subject: s.subject });
+  const openAdd = () => setModal({ open: true, isEdit: false, id: '', exam_date: '', dept: '', year: '1', subject: '' });
+  const openEdit = (s: ExamSchedule) => setModal({ 
+    open: true, isEdit: true, id: s.id, exam_date: s.exam_date, 
+    dept: s.dept, year: String(s.year), subject: s.subject 
+  });
   const closeModal = () => setModal(m => ({ ...m, open: false }));
 
   const saveSchedule = async () => {
     const { exam_date, dept, year, subject, isEdit, id } = modal;
-    const yearNum = parseInt(year);
-    const cleanSubject = subject.trim();
-    if (!exam_date || !dept || !yearNum || !cleanSubject) { showToast('Please fill all fields.', 'error'); return; }
+    if (!exam_date || !dept || !year || !subject) {
+      showToast('Mandatory fields missing. Please review.', 'error'); return;
+    }
 
     try {
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${API_BASE}/schedules/${id}` : `${API_BASE}/schedules`;
-      
-      const payload = { exam_date, dept, year: yearNum, subject: cleanSubject };
-
       const res = await fetch(url, {
-        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        method, 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ exam_date, dept, year: Number(year), subject: subject.trim() })
       });
 
-      if (!res.ok) {
-        showToast('Failed to save schedule.', 'error');
-        return;
+      if (res.ok) {
+        showToast(`Schedule ${isEdit ? 'updated' : 'recorded'}.`, 'success');
+        loadSchedules();
+        closeModal();
+      } else {
+        showToast('Request processing failure.', 'error');
       }
-
-      showToast(`Exam schedule ${isEdit ? 'updated' : 'added'}!`, 'success');
-      loadSchedules();
-      closeModal();
     } catch (err) {
-      showToast('API error.', 'error');
+      showToast('API Failure.', 'error');
     }
   };
 
-  const deleteSchedule = async (id: string | undefined) => {
-    if (!id || !confirm('Delete this exam schedule?')) return;
+  const deleteSchedule = async (id: string, subject: string) => {
+    if (!confirm(`Confirm: Delete exam schedule for ${subject}?`)) return;
     try {
       const res = await fetch(`${API_BASE}/schedules/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        showToast('Schedule deleted.', 'warning');
+        showToast('Schedule purged.', 'warning');
         loadSchedules();
       }
     } catch (err) {
-      showToast('Error deleting schedule.', 'error');
+      showToast('Action failed.', 'error');
     }
   };
 
@@ -96,117 +114,177 @@ const ExamSchedulePage = () => {
     <Layout>
       <ToastContainer />
 
-      <div className="page-title-box">
-        <h1 className="page-title">Exam Schedule Management</h1>
-        <p className="page-subtitle">Add, edit and manage examination schedules by date, department and year</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 800 }}>Exam Schedule Ledger</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+            Master calendar for university-wide examination dates and subject mapping.
+          </p>
+        </div>
+        <button className="btn btn-primary" onClick={openAdd}><Plus size={16} /> New Exam Schedule</button>
+      </div>
+
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: 300 }}>
+            <label className="form-label" style={{ fontSize: 9, marginBottom: 4 }}>Filter by Date</label>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="date" className="form-control" style={{ height: 42, background: 'var(--secondary-light)' }} 
+                value={filterDate} onChange={e => setFilterDate(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div style={{ width: 1, height: 24, background: 'var(--border-color)', marginTop: 16 }}></div>
+          
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Calendar size={16} color="var(--text-muted)" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
+              Active Dates: {uniqueDates.length}
+            </span>
+          </div>
+
+          <div style={{ flex: 1 }}></div>
+          <button className="btn btn-secondary" onClick={() => setFilterDate('')} style={{ marginTop: 16 }}>Clear Filter</button>
+        </div>
       </div>
 
       <div className="card">
-        <div className="card-header">
-          📅 Exam Schedules
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
-              style={{ padding: '4px 8px', fontSize: 12, border: '1px solid rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.15)', color: '#fff', borderRadius: 3, width: 140 }} />
-            <button className="btn btn-sm" onClick={openAdd}
-              style={{ background: 'rgba(255,255,255,0.18)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
-              ➕ Add Schedule
-            </button>
-          </div>
-        </div>
-
-        <div className="card-body">
-          <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: 12, color: '#555' }}>
-            <span>Total Schedules: <strong>{schedules.length}</strong></span>
-            <span>Exam Dates: <strong>{uniqueDates.join(', ') || '—'}</strong></span>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {['#', 'Exam Date', 'Department', 'Year', 'Subject', 'Actions'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '10px 14px', background: '#f8f9fa', color: '#666', fontSize: 12, fontWeight: 700 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 30, color: '#aaa' }}>
-                    {filterDate ? 'No exams on this date.' : 'No schedules added yet.'}
-                  </td></tr>
-                ) : (
-                  filtered.map((s, i) => (
-                    <tr key={s.id} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>{i + 1}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}><strong>{fmtDate(s.exam_date)}</strong></td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <span className={`badge-dept ${deptClass(s.dept)}`}>{s.dept}</span>
-                      </td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <span className={`badge-year ${yearClass(s.year)}`}>Year {s.year}</span>
-                      </td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>{s.subject}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn-edit" onClick={() => openEdit(s)}>✏️ Edit</button>
-                          <button className="btn-delete" onClick={() => deleteSchedule(s.id)}>🗑️ Delete</button>
+        <div className="table-wrapper">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Examination Date</th>
+                <th>Academic Depth</th>
+                <th>Level</th>
+                <th>Subject & Syllabus</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Synchronising master calendar...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No examinations scheduled for this timeframe.</td></tr>
+              ) : (
+                filtered.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ 
+                          width: 44, height: 44, borderRadius: 10, background: 'var(--secondary-light)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                            {new Date(s.exam_date).toLocaleString('en-US', { month: 'short' })}
+                          </span>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)', lineHeight: 1 }}>
+                            {new Date(s.exam_date).getDate()}
+                          </span>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ marginTop: 10, fontSize: 12, color: '#888' }}>
-            Showing {filtered.length} of {schedules.length} schedules
-          </div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{fmtDate(s.exam_date)}</div>
+                      </div>
+                    </td>
+                    <td><span className="badge badge-primary">{s.dept} ENGINEERING</span></td>
+                    <td><div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>YEAR {s.year}</div></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <BookOpen size={16} color="var(--accent)" />
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{s.subject}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                        <button onClick={() => openEdit(s)} className="action-btn-erp edit"><Edit3 size={14} /></button>
+                        <button onClick={() => deleteSchedule(s.id, s.subject)} className="action-btn-erp delete"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Modal */}
       {modal.open && (
-        <div className="modal-overlay active" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
-          <div className="modal">
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
+          <div className="modal-content" style={{ maxWidth: 460 }}>
             <div className="modal-header">
-              <span>{modal.isEdit ? '✏️ Edit Schedule' : '➕ Add Exam Schedule'}</span>
-              <button className="modal-close" onClick={closeModal}>✕</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
+                  <Calendar size={22} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0 }}>{modal.isEdit ? 'Update Schedule' : 'Schedule New Exam'}</h3>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>Exam Branch Operations</p>
+                </div>
+              </div>
+              <button onClick={closeModal} style={{ background: 'none', border: 'none', color: 'var(--text-light)', cursor: 'pointer' }}>✕</button>
             </div>
+            
             <div className="modal-body">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Exam Date *</label>
-                  <input type="date" value={modal.exam_date}
-                    onChange={e => setModal(m => ({ ...m, exam_date: e.target.value }))} />
+              <div className="form-group">
+                <label className="form-label">Subject & Course Name</label>
+                <div style={{ position: 'relative' }}>
+                  <Bookmark size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+                  <input 
+                    type="text" className="form-control" style={{ paddingLeft: 36 }} placeholder="e.g. Adv. Data Structures" 
+                    value={modal.subject} onChange={e => setModal(m => ({ ...m, subject: e.target.value }))}
+                  />
                 </div>
-                <div className="form-group">
-                  <label>Department *</label>
-                  <select value={modal.dept} onChange={e => setModal(m => ({ ...m, dept: e.target.value }))}>
-                    <option value="">Select Department</option>
-                    {DEPTS.map(d => <option key={d}>{d}</option>)}
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Examination Date</label>
+                <input 
+                  type="date" className="form-control" 
+                  value={modal.exam_date} onChange={e => setModal(m => ({ ...m, exam_date: e.target.value }))}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Target Dept.</label>
+                  <select 
+                    className="form-control" 
+                    value={modal.dept} onChange={e => setModal(m => ({ ...m, dept: e.target.value }))}
+                  >
+                    <option value="">Select Dept.</option>
+                    {DEPTS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Year *</label>
-                  <select value={modal.year} onChange={e => setModal(m => ({ ...m, year: e.target.value }))}>
-                    <option value="">Select Year</option>
-                    {YEARS.map(y => <option key={y} value={y}>{y}{['st','nd','rd','th'][y-1]} Year</option>)}
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Study Year</label>
+                  <select 
+                    className="form-control" 
+                    value={modal.year} onChange={e => setModal(m => ({ ...m, year: e.target.value }))}
+                  >
+                    {YEARS.map(y => <option key={y} value={y}>Year {y}</option>)}
                   </select>
-                </div>
-                <div className="form-group">
-                  <label>Subject *</label>
-                  <input type="text" placeholder="e.g. Data Structures" value={modal.subject}
-                    onChange={e => setModal(m => ({ ...m, subject: e.target.value }))} />
                 </div>
               </div>
             </div>
+            
             <div className="modal-footer">
-              <button className="btn btn-grey" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-maroon" onClick={saveSchedule}>💾 Save Schedule</button>
+              <button className="btn btn-secondary" onClick={closeModal}>Discard</button>
+              <button className="btn btn-primary" onClick={saveSchedule}>Schedule Examination</button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .action-btn-erp {
+          width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-color);
+          background: #fff; cursor: pointer; display: flex; align-items: center; 
+          justify-content: center; transition: all 0.2s;
+        }
+        .action-btn-erp.edit:hover { background: var(--primary-light); color: var(--primary); border-color: rgba(131, 18, 56, 0.1); }
+        .action-btn-erp.delete:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+      `}</style>
     </Layout>
   );
 };

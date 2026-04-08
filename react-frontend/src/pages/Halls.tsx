@@ -1,14 +1,32 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useToast } from '../components/Toast';
-import { type Hall } from '../utils/data';
+import { 
+  Plus, 
+  Layers, 
+  Edit3, 
+  Trash2, 
+  School,
+  Building2,
+  LayoutGrid
+} from 'lucide-react';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = '/api';
+
+interface Hall {
+  id: string;
+  hall_no: string;
+  block_name: string;
+  floor: number;
+  capacity: number;
+  rows?: number;
+  seats_per_row?: number;
+}
 
 interface ModalState {
   open: boolean;
   isEdit: boolean;
-  id?: string;
+  id: string;
   hall_no: string;
   block_name: string;
   floor: string;
@@ -21,6 +39,7 @@ const BLOCKS = ['A', 'B', 'C', 'D', 'E'];
 
 const Halls = () => {
   const [halls, setHalls] = useState<Hall[]>([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>({
     open: false, isEdit: false, id: '', hall_no: '', block_name: '', floor: '', capacity: '', rows: '5', seats_per_row: '8'
   });
@@ -29,6 +48,7 @@ const Halls = () => {
   useEffect(() => { loadHalls(); }, []);
 
   const loadHalls = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/halls`);
       if (res.ok) {
@@ -36,65 +56,68 @@ const Halls = () => {
         setHalls(data);
       }
     } catch (err) {
-      showToast('Error loading halls.', 'error');
+      showToast('Backend connection failed.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const totalCapacity = halls.reduce((a, h) => a + Number(h.capacity), 0);
 
-  const openAdd = () => setModal({ open: true, isEdit: false, id: '', hall_no: '', block_name: '', floor: '', capacity: '', rows: '5', seats_per_row: '8' });
+  const openAdd = () => setModal({ 
+    open: true, isEdit: false, id: '', hall_no: '', block_name: '', floor: '', capacity: '', rows: '5', seats_per_row: '8' 
+  });
+  
   const openEdit = (h: Hall) => setModal({ 
     open: true, isEdit: true, id: h.id, hall_no: h.hall_no, block_name: h.block_name, 
     floor: String(h.floor), capacity: String(h.capacity), 
     rows: String(h.rows || 5), seats_per_row: String(h.seats_per_row || 8) 
   });
+
   const closeModal = () => setModal(m => ({ ...m, open: false }));
 
   const saveHall = async () => {
-    const hall_no = modal.hall_no.trim().toUpperCase();
-    const { block_name, id, isEdit } = modal;
-    const floor = parseInt(modal.floor);
-    const capacity = parseInt(modal.capacity);
-    const rows = parseInt(modal.rows);
-    const seats_per_row = parseInt(modal.seats_per_row);
-
-    if (!hall_no || !block_name || isNaN(floor) || isNaN(capacity) || capacity < 1) {
-      showToast('Please fill all required fields correctly.', 'error'); return;
+    const { hall_no, block_name, id, isEdit, floor, capacity, rows, seats_per_row } = modal;
+    if (!hall_no || !block_name || !floor || !capacity) {
+      showToast('Validation Failed: Required fields missing.', 'error'); return;
     }
 
     try {
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${API_BASE}/halls/${id}` : `${API_BASE}/halls`;
-      const payload = { hall_no, block_name, floor, capacity, rows, seats_per_row };
-
       const res = await fetch(url, {
-        method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        method, 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          hall_no, block_name, floor: Number(floor), 
+          capacity: Number(capacity), rows: Number(rows), 
+          seats_per_row: Number(seats_per_row) 
+        })
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        showToast(`Room ${hall_no} successfully saved.`, 'success');
+        loadHalls();
+        closeModal();
+      } else {
         const err = await res.json();
-        showToast(err.error || 'Failed to save hall.', 'error');
-        return;
+        showToast(err.error || 'Request unsuccessful.', 'error');
       }
-
-      showToast(`Hall ${hall_no} ${isEdit ? 'updated' : 'added'}!`, 'success');
-      loadHalls();
-      closeModal();
     } catch (err) {
-      showToast('API error.', 'error');
+      showToast('Network latency issues.', 'error');
     }
   };
 
-  const deleteHall = async (id: string | undefined, hall_no: string) => {
-    if (!id || !confirm(`Delete hall ${hall_no}?`)) return;
+  const deleteHall = async (id: string, hall_no: string) => {
+    if (!confirm(`Warning: This will permanently remove Hall - ${hall_no}. Proceed?`)) return;
     try {
       const res = await fetch(`${API_BASE}/halls/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        showToast('Hall deleted.', 'warning');
+        showToast('Room decommissioned.', 'warning');
         loadHalls();
       }
     } catch (err) {
-      showToast('Error deleting hall.', 'error');
+      showToast('Action failed.', 'error');
     }
   };
 
@@ -102,118 +125,195 @@ const Halls = () => {
     <Layout>
       <ToastContainer />
 
-      <div className="page-title-box">
-        <h1 className="page-title">Hall Management</h1>
-        <p className="page-subtitle">Manage exam halls, blocks, floors, and seating capacity</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 800 }}>Infra & Hall Management</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+            Control center for campus exam rooms, seating configurations, and capacity planning.
+          </p>
+        </div>
+        <button className="btn btn-primary" onClick={openAdd}><Plus size={16} /> Add Examination Hall</button>
+      </div>
+
+      {/* Summary Summary */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+        <div className="card" style={{ padding: 20, borderLeft: '4px solid var(--primary)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Inventory Count</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800 }}>{halls.length}</h2>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Active Rooms</span>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 20, borderLeft: '4px solid var(--accent)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Capacity</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800 }}>{totalCapacity}</h2>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Available Seats</span>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 20, borderLeft: '4px solid var(--secondary)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Floor Coverage</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800 }}>{Math.max(0, ...halls.map(h => h.floor))}</h2>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Highest Floor Elevation</span>
+          </div>
+        </div>
       </div>
 
       <div className="card">
-        <div className="card-header">
-          🏛️ Exam Halls
-          <button className="btn btn-sm" onClick={openAdd}
-            style={{ background: 'rgba(255,255,255,0.18)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
-            ➕ Add Hall
-          </button>
-        </div>
-
-        <div className="card-body">
-          <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: 12, color: '#555' }}>
-            <span>Total Halls: <strong>{halls.length}</strong></span>
-            <span>Total Capacity: <strong>{totalCapacity} seats</strong></span>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {['#', 'Hall Number', 'Block', 'Floor', 'Capacity', 'Actions'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '10px 14px', background: '#f8f9fa', color: '#666', fontSize: 12, fontWeight: 700 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {halls.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 30, color: '#aaa' }}>No halls added yet.</td></tr>
-                ) : (
-                  halls.map((h, i) => (
-                    <tr key={h.hall_no} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>{i + 1}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}><strong>{h.hall_no}</strong></td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <span style={{ background: '#e0f5f7', color: '#2c8089', padding: '2px 8px', borderRadius: 10, fontWeight: 600, fontSize: 11 }}>Block {h.block_name}</span>
-                      </td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>Floor {h.floor}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <span style={{ background: '#e8ffe0', color: '#227700', padding: '2px 8px', borderRadius: 10, fontWeight: 600, fontSize: 11 }}>{h.capacity} seats</span>
-                      </td>
-                      <td style={{ padding: '10px 14px', fontSize: 13 }}>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="btn-edit" onClick={() => openEdit(h)}>✏️ Edit</button>
-                          <button className="btn-delete" onClick={() => deleteHall(h.id, h.hall_no)}>🗑️ Delete</button>
+        <div className="table-wrapper">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Resource ID</th>
+                <th>Academic Block</th>
+                <th>Level / Floor</th>
+                <th>Seating Capacity</th>
+                <th>Matrix Config</th>
+                <th style={{ textAlign: 'right' }}>Management</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Retrieving architectural assets...</td></tr>
+              ) : halls.length === 0 ? (
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No examination halls detected in the current scope.</td></tr>
+              ) : (
+                halls.map((h) => (
+                  <tr key={h.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 32, height: 32, background: 'var(--secondary-light)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <School size={16} color="var(--primary)" />
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ marginTop: 10, fontSize: 12, color: '#888' }}>{halls.length} hall(s) registered</div>
+                        <strong style={{ fontSize: 14 }}>{h.hall_no}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: 'var(--text-main)' }}>
+                        <Building2 size={14} color="var(--text-muted)" /> Block {h.block_name}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 13 }}>
+                        <Layers size={14} /> Level {h.floor}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="badge badge-primary">{h.capacity} SEATS</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-light)', fontWeight: 600 }}>
+                        <LayoutGrid size={13} /> {h.rows || 5} × {h.seats_per_row || 8} Layout
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                        <button onClick={() => openEdit(h)} className="action-btn-erp edit"><Edit3 size={15} /></button>
+                        <button onClick={() => deleteHall(h.id, h.hall_no)} className="action-btn-erp delete"><Trash2 size={15} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Modal */}
       {modal.open && (
-        <div className="modal-overlay active" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
-          <div className="modal">
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
+          <div className="modal-content" style={{ maxWidth: 480 }}>
             <div className="modal-header">
-              <span>{modal.isEdit ? '✏️ Edit Hall' : '➕ Add Hall'}</span>
-              <button className="modal-close" onClick={closeModal}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Hall Number *</label>
-                  <input type="text" placeholder="e.g. H101" value={modal.hall_no}
-                    disabled={modal.isEdit}
-                    onChange={e => setModal(m => ({ ...m, hall_no: e.target.value }))} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, background: 'var(--accent-light)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
+                  <School size={22} />
                 </div>
+                <div>
+                  <h3 style={{ margin: 0 }}>{modal.isEdit ? 'Update Asset' : 'New Hall Entry'}</h3>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Infra Catalog #102</p>
+                </div>
+              </div>
+              <button onClick={closeModal} style={{ background: 'none', border: 'none', color: 'var(--text-light)', cursor: 'pointer' }}>✕</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Hall Identifier / Name</label>
+                <input 
+                  type="text" className="form-control" placeholder="e.g. H-102 or AUDITORIUM" 
+                  value={modal.hall_no} onChange={e => setModal(m => ({ ...m, hall_no: e.target.value }))}
+                />
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div className="form-group">
-                  <label>Block *</label>
-                  <select value={modal.block_name} onChange={e => setModal(m => ({ ...m, block_name: e.target.value }))}>
+                  <label className="form-label">Academic Block</label>
+                  <select 
+                    className="form-control" 
+                    value={modal.block_name} onChange={e => setModal(m => ({ ...m, block_name: e.target.value }))}
+                  >
                     <option value="">Select Block</option>
-                    {BLOCKS.map(b => <option key={b}>{b}</option>)}
+                    {BLOCKS.map(b => <option key={b} value={b}>{b} Block</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Floor *</label>
-                  <input type="number" placeholder="e.g. 1" min={0} max={10} value={modal.floor}
-                    onChange={e => setModal(m => ({ ...m, floor: e.target.value }))} />
+                  <label className="form-label">Floor Number</label>
+                  <input 
+                    type="number" className="form-control" placeholder="0-10" 
+                    value={modal.floor} onChange={e => setModal(m => ({ ...m, floor: e.target.value }))}
+                  />
                 </div>
-                <div className="form-group">
-                  <label>Capacity *</label>
-                  <input type="number" placeholder="e.g. 40" min={1} max={200} value={modal.capacity}
-                    onChange={e => setModal(m => ({ ...m, capacity: e.target.value }))} />
-                </div>
-                <div className="form-group">
-                  <label>Rows</label>
-                  <input type="number" min={1} max={50} value={modal.rows}
-                    onChange={e => setModal(m => ({ ...m, rows: e.target.value }))} />
-                </div>
-                <div className="form-group">
-                  <label>Seats per row</label>
-                  <input type="number" min={1} max={20} value={modal.seats_per_row}
-                    onChange={e => setModal(m => ({ ...m, seats_per_row: e.target.value }))} />
+              </div>
+
+              <div style={{ background: 'var(--secondary-light)', padding: 16, borderRadius: 12, border: '1px solid var(--border-color)', marginTop: 8 }}>
+                <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase' }}>Configuration Matrix</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: 10 }}>Total Seats</label>
+                    <input 
+                      type="number" className="form-control" value={modal.capacity} 
+                      onChange={e => setModal(m => ({ ...m, capacity: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: 10 }}>Grid Rows</label>
+                    <input 
+                      type="number" className="form-control" value={modal.rows} 
+                      onChange={e => setModal(m => ({ ...m, rows: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: 10 }}>Seats/Row</label>
+                    <input 
+                      type="number" className="form-control" value={modal.seats_per_row} 
+                      onChange={e => setModal(m => ({ ...m, seats_per_row: e.target.value }))}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
+            
             <div className="modal-footer">
-              <button className="btn btn-grey" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-maroon" onClick={saveHall}>💾 Save Hall</button>
+              <button className="btn btn-secondary" onClick={closeModal}>Discard</button>
+              <button className="btn btn-primary" onClick={saveHall}>Commit Resource</button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .action-btn-erp {
+          width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-color);
+          background: #fff; cursor: pointer; display: flex; align-items: center; 
+          justify-content: center; transition: all 0.2s;
+        }
+        .action-btn-erp.edit:hover { background: var(--primary-light); color: var(--primary); border-color: rgba(131, 18, 56, 0.1); }
+        .action-btn-erp.delete:hover { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+      `}</style>
     </Layout>
   );
 };

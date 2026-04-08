@@ -16,9 +16,12 @@ function App() {
       <Route path="/students" element={<Students />} />
       <Route path="/halls" element={<Halls />} />
       <Route path="/schedule" element={<ExamSchedule />} />
+      <Route path="/schedules" element={<ExamSchedule />} />
       <Route path="/allocation" element={<Allocation />} />
       <Route path="/allocation-result" element={<AllocationResult />} />
+      <Route path="/results" element={<AllocationResult />} />
       <Route path="/student-portal" element={<StudentPortal />} />
+      <Route path="/portal" element={<StudentPortal />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
     </Routes>
   );

@@ -26,6 +26,17 @@ export async function POST(req: Request) {
 
         return Response.json({ message: "Student added", data });
     } catch (error: any) {
+        console.error("Prisma Error:", error);
+
+        // Prisma unique constraint violation code
+        if (error.code === "P2002") {
+            const field = error.meta?.target || "Registration Number";
+            return Response.json(
+                { error: `Student with this ${field} already exists.` },
+                { status: 409 }
+            );
+        }
+
         return Response.json({ error: error.message }, { status: 500 });
     }
 }

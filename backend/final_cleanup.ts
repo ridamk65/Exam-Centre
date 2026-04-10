@@ -448,7 +448,7 @@ RegNo StudentName Dept HALL
 43731258 KATTA AMULYA AI 373
 43731259 ANSHI CHRISTINA PREM RAJA SINGH SUJA AI 373
 43731261 BALA NARENDRAN M AI 373
-\`;
+`;
 
 async function main() {
   console.log('--- PERFORMING FULL DATABASE RESET ---');
@@ -508,7 +508,7 @@ async function main() {
     });
   }
 
-  console.log(\`Importing \${students.length} strictly formatted students...\`);
+  console.log(`Importing ${students.length} strictly formatted students...`);
 
   await prisma.student.createMany({
     data: students

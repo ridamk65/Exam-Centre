@@ -26,7 +26,7 @@ export default function UsersPage() {
         const fetchUsers = async () => {
             try {
                 const token = localStorage.getItem('adminToken');
-                const response = await fetch('http://localhost:5000/api/auth/users', {
+                const response = await fetch('http://127.0.0.1:5000/api/auth/users', {
                     headers: { 'Authorization': `Bearer ${token}` },
                 });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -55,7 +55,7 @@ export default function UsersPage() {
 
         try {
             const token = localStorage.getItem('adminToken');
-            const response = await fetch('http://localhost:5000/api/auth/register', {
+            const response = await fetch('http://127.0.0.1:5000/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

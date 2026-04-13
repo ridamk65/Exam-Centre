@@ -22,7 +22,7 @@ export default function DashboardPage() {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('adminToken');
-                const response = await fetch('http://localhost:5000/api/auth/stats', {
+                const response = await fetch('http://127.0.0.1:5000/api/auth/stats', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',

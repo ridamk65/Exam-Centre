@@ -4,18 +4,13 @@ import { cn } from '@/lib/utils';
 interface CardProps {
     children: React.ReactNode;
     className?: string;
-    hover?: boolean;
-    glow?: boolean;
 }
 
-export function Card({ children, className, hover = false, glow = false }: CardProps) {
+export function Card({ children, className }: CardProps) {
     return (
         <div
             className={cn(
-                'bg-[var(--color-card)] border border-[var(--color-border)] rounded-[var(--radius-md)] p-6',
-                'shadow-[var(--shadow-card)]',
-                hover && 'card-hover cursor-pointer',
-                glow && 'animate-glow',
+                'card bg-white border border-neutral-200 p-6',
                 className
             )}
         >
@@ -36,22 +31,22 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, icon, trend }: MetricCardProps) {
     return (
-        <Card hover className="animate-fade-in">
+        <Card className="animate-fade-in hover:border-black transition-colors">
             <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-[var(--color-text-muted)] text-sm font-medium mb-2">{title}</p>
-                    <h3 className="text-3xl font-bold text-[var(--color-text)]">{value}</h3>
+                <div className="space-y-2">
+                    <p className="text-neutral-400 text-[10px] font-black uppercase tracking-widest">{title}</p>
+                    <h3 className="text-3xl font-black tracking-tighter">{value}</h3>
                     {trend && (
                         <p className={cn(
-                            'text-sm mt-2',
-                            trend.isPositive ? 'text-green-500' : 'text-red-500'
+                            'text-[10px] font-black uppercase tracking-widest px-2 py-0.5 inline-block',
+                            trend.isPositive ? 'bg-neutral-100 text-black' : 'bg-red-50 text-red-600'
                         )}>
-                            {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
+                            {trend.isPositive ? '+' : '-'} {Math.abs(trend.value)}%
                         </p>
                     )}
                 </div>
                 {icon && (
-                    <div className="text-[var(--color-accent)] opacity-80">
+                    <div className="w-10 h-10 border border-neutral-100 flex items-center justify-center">
                         {icon}
                     </div>
                 )}

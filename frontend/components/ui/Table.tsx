@@ -9,21 +9,21 @@ interface TableProps {
 
 export function Table({ headers, children, className }: TableProps) {
     return (
-        <div className={cn('overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)]', className)}>
+        <div className={cn('overflow-hidden border border-neutral-200 bg-white shadow-sm', className)}>
             <table className="w-full">
-                <thead className="bg-[var(--color-primary)] bg-opacity-10">
+                <thead className="bg-neutral-50 border-b border-neutral-200">
                     <tr>
                         {headers.map((header, index) => (
                             <th
                                 key={index}
-                                className="px-6 py-4 text-left text-sm font-semibold text-[var(--color-text)] uppercase tracking-wider"
+                                className="px-6 py-4 text-left text-[10px] font-black text-neutral-400 uppercase tracking-[0.2em]"
                             >
                                 {header}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--color-border)]">
+                <tbody className="divide-y divide-neutral-100">
                     {children}
                 </tbody>
             </table>
@@ -42,7 +42,7 @@ export function TableRow({ children, onClick, className }: TableRowProps) {
         <tr
             onClick={onClick}
             className={cn(
-                'bg-[var(--color-card)] hover:bg-[var(--color-primary)] hover:bg-opacity-5 transition-colors',
+                'group hover:bg-neutral-50 transition-colors',
                 onClick && 'cursor-pointer',
                 className
             )}
@@ -59,7 +59,7 @@ interface TableCellProps {
 
 export function TableCell({ children, className }: TableCellProps) {
     return (
-        <td className={cn('px-6 py-4 text-sm text-[var(--color-text)]', className)}>
+        <td className={cn('px-6 py-4 text-sm text-neutral-600 font-medium group-hover:text-black transition-colors', className)}>
             {children}
         </td>
     );

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, CheckCircle, XCircle, Filter } from 'lucide-react';
+import { Download, CheckCircle, XCircle, Filter, Search, ShieldCheck } from 'lucide-react';
 import { Table, TableRow, TableCell } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { formatDate, truncateHash, getStatusColor, convertToCSV, downloadFile } from '@/lib/utils';
+import { formatDate, truncateHash, convertToCSV, downloadFile, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface LogEntry {
@@ -22,7 +22,6 @@ export default function LogsPage() {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'granted' | 'denied'>('all');
-    const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchLogs = async () => {
@@ -51,7 +50,14 @@ export default function LogsPage() {
     });
 
     if (isLoading) {
-        return <div className="p-8 text-center text-[var(--color-text-muted)] animate-pulse">Loading logs...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="flex flex-col items-center gap-4">
+                    <ShieldCheck className="animate-pulse text-neutral-400" size={48} />
+                    <p className="text-sm font-black uppercase tracking-[0.2em] animate-pulse">Syncing Audit Ledger...</p>
+                </div>
+            </div>
+        );
     }
 
     const handleVerify = async (hash: string) => {
@@ -89,125 +95,115 @@ export default function LogsPage() {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="max-w-[1200px] mx-auto space-y-12 py-8 animate-fade-in">
             {/* Header */}
-            <div className="flex justify-between items-center animate-fade-in">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl font-bold text-[var(--color-text)] mb-2">Access Logs</h1>
-                    <p className="text-[var(--color-text-muted)]">
-                        View and verify blockchain access events
-                    </p>
+                    <h1 className="text-4xl font-black tracking-tight mb-2">Audit Ledger.</h1>
+                    <p className="text-neutral-500 text-sm font-medium">Immutable record of all blockchain-secured access events.</p>
                 </div>
-                <Button onClick={handleExportCSV} variant="outline" className="gap-2">
-                    <Download size={18} />
-                    Export CSV
+                <Button variant="outline" size="md" onClick={handleExportCSV} className="gap-2">
+                    <Download size={16} />
+                    Export Ledger
                 </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-                <Card>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-[var(--color-text-muted)] mb-1">Total Logs</p>
-                            <p className="text-3xl font-bold text-[var(--color-text)]">{logs.length}</p>
-                        </div>
-                        <Filter size={32} className="text-[var(--color-accent)] opacity-50" />
-                    </div>
-                </Card>
-                <Card>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-[var(--color-text-muted)] mb-1">Granted</p>
-                            <p className="text-3xl font-bold text-green-500">
-                                {logs.filter(l => l.status === 'Granted').length}
-                            </p>
-                        </div>
-                        <CheckCircle size={32} className="text-green-500 opacity-50" />
-                    </div>
-                </Card>
-                <Card>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-[var(--color-text-muted)] mb-1">Denied</p>
-                            <p className="text-3xl font-bold text-red-500">
-                                {logs.filter(l => l.status === 'Denied').length}
-                            </p>
-                        </div>
-                        <XCircle size={32} className="text-red-500 opacity-50" />
-                    </div>
-                </Card>
+            {/* Stats Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+                <div className="border border-neutral-100 p-6 bg-neutral-50">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-2">Total Events</p>
+                    <p className="text-2xl font-black">{logs.length}</p>
+                </div>
+                <div className="border border-neutral-100 p-6 bg-neutral-50">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-2">Success Rate</p>
+                    <p className="text-2xl font-black">{logs.length > 0 ? Math.round((logs.filter(l => l.status === 'Granted').length / logs.length) * 100) : 0}%</p>
+                </div>
+                <div className="border border-neutral-100 p-6 bg-green-50">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-600 mb-2">Verified</p>
+                    <p className="text-2xl font-black text-green-700">{logs.filter(l => l.status === 'Granted').length}</p>
+                </div>
+                <div className="border border-neutral-200 p-6 bg-black text-white">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500 mb-2">Denied / Flagged</p>
+                    <p className="text-2xl font-black">{logs.filter(l => l.status === 'Denied').length}</p>
+                </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-2 animate-fade-in">
-                <Button
-                    variant={filter === 'all' ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter('all')}
-                >
-                    All
-                </Button>
-                <Button
-                    variant={filter === 'granted' ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter('granted')}
-                >
-                    Granted
-                </Button>
-                <Button
-                    variant={filter === 'denied' ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter('denied')}
-                >
-                    Denied
-                </Button>
-            </div>
+            {/* Filtering & Listing */}
+            <div className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div className="flex bg-neutral-100 p-1 rounded">
+                        {['all', 'granted', 'denied'].map((f) => (
+                             <button
+                                key={f}
+                                onClick={() => setFilter(f as any)}
+                                className={cn(
+                                    "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all",
+                                    filter === f ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:text-black"
+                                )}
+                             >
+                                {f}
+                             </button>
+                        ))}
+                    </div>
+                    
+                    <div className="relative w-full md:w-64">
+                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                         <input 
+                            type="text" 
+                            placeholder="Search Ledger..." 
+                            className="w-full bg-neutral-50 border border-neutral-100 py-2 pl-9 pr-4 text-xs font-bold focus:outline-none focus:border-black transition-colors"
+                         />
+                    </div>
+                </div>
 
-            {/* Logs Table */}
-            <div className="animate-fade-in">
-                <Table headers={['User', 'Action', 'Timestamp', 'Status', 'Paper Hash', 'Actions']}>
-                    {filteredLogs.map((log) => (
-                        <TableRow
-                            key={log.id}
-                            onClick={() => setExpandedRow(expandedRow === log.id ? null : log.id)}
-                            className="cursor-pointer"
-                        >
-                            <TableCell>
-                                <div>
-                                    <p className="font-medium">{log.userName}</p>
-                                    <p className="text-xs text-[var(--color-text-muted)]">{log.user}</p>
-                                </div>
-                            </TableCell>
-                            <TableCell>{log.action}</TableCell>
-                            <TableCell>
-                                <span className="text-sm">{formatDate(log.timestamp)}</span>
-                            </TableCell>
-                            <TableCell>
-                                <span className={`font-semibold ${getStatusColor(log.status)}`}>
-                                    {log.status}
-                                </span>
-                            </TableCell>
-                            <TableCell>
-                                <code className="text-xs font-mono text-[var(--color-accent)]">
-                                    {truncateHash(log.paperHash)}
-                                </code>
-                            </TableCell>
-                            <TableCell>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleVerify(log.paperHash);
-                                    }}
-                                >
-                                    Verify
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </Table>
+                <div className="animate-fade-in">
+                    <Table headers={['Identity Hash', 'Action', 'Timestamp', 'Verification', 'Blockchain Signature', 'Audit']}>
+                        {filteredLogs.map((log) => (
+                            <TableRow key={log.id}>
+                                <TableCell>
+                                    <div className="space-y-0.5">
+                                        <p className="font-black text-xs text-black">{log.userName}</p>
+                                        <p className="text-[10px] font-bold text-neutral-400 font-mono">{log.user}</p>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{log.action}</span>
+                                </TableCell>
+                                <TableCell>
+                                    <span className="text-[10px] font-bold text-neutral-500">{formatDate(log.timestamp).split(',').join(' | ')}</span>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                         <div className={cn(
+                                            "w-1.5 h-1.5 rounded-full",
+                                            log.status === 'Granted' ? "bg-black" : "bg-red-500"
+                                         )} />
+                                         <span className={cn(
+                                            "text-[10px] font-black uppercase tracking-widest",
+                                            log.status === 'Granted' ? "text-black" : "text-red-500"
+                                         )}>{log.status}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <code className="text-[10px] font-mono font-bold text-neutral-400">
+                                        {truncateHash(log.paperHash)}
+                                    </code>
+                                </TableCell>
+                                <TableCell>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleVerify(log.paperHash);
+                                        }}
+                                        className="text-[10px] font-black uppercase tracking-widest border border-black px-3 py-1.5 hover:bg-black hover:text-white transition-all flex items-center gap-2"
+                                    >
+                                        <ShieldCheck size={12} /> Verify
+                                    </button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </Table>
+                </div>
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyPaperHash } from '@/lib/blockchain';
+import { camelCaseAttributes } from 'framer-motion';
 
 export async function POST(request: Request) {
     try {

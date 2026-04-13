@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Eye, EyeOff, Lock, User } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, Lock, User, ArrowRight } from 'lucide-react';
 
 export default function AdminLoginPage() {
     const router = useRouter();
@@ -27,12 +27,11 @@ export default function AdminLoginPage() {
             const data = await response.json();
 
             if (response.ok && data.token) {
-                // Store admin session in localStorage
                 localStorage.setItem('adminToken', data.token);
                 localStorage.setItem('adminAuthenticated', 'true');
                 router.push('/dashboard');
             } else {
-                setError(data.message || 'Invalid admin credentials. Please try again.');
+                setError(data.message || 'Invalid credentials. Please try again.');
                 setLoading(false);
             }
         } catch (err) {
@@ -43,92 +42,77 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #0F172A 100%)' }}>
+        <div className="min-h-screen flex flex-col">
+            {/* Navbar — same as landing page */}
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-black/80 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <button
+                        onClick={() => router.push('/')}
+                        className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+                    >
+                        <Lock size={20} />
+                        <span className="font-bold text-lg tracking-tight">EduVaultX</span>
+                    </button>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="btn-secondary text-sm px-4 py-2"
+                    >
+                        ← Back to Home
+                    </button>
+                </div>
+            </nav>
 
-            {/* Animated Background Orbs */}
-            <div style={{
-                position: 'absolute', top: '10%', left: '15%',
-                width: '300px', height: '300px',
-                background: 'radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%)',
-                borderRadius: '50%', filter: 'blur(40px)',
-                animation: 'pulse-dot 4s ease-in-out infinite'
-            }} />
-            <div style={{
-                position: 'absolute', bottom: '10%', right: '10%',
-                width: '400px', height: '400px',
-                background: 'radial-gradient(circle, rgba(30,58,138,0.3) 0%, transparent 70%)',
-                borderRadius: '50%', filter: 'blur(60px)',
-                animation: 'pulse-dot 6s ease-in-out infinite'
-            }} />
+            {/* Main content */}
+            <main className="flex-1 flex items-center justify-center px-6 pt-24 pb-12">
+                <div className="w-full max-w-sm animate-fade-in">
 
-            {/* Grid overlay */}
-            <div style={{
-                position: 'absolute', inset: 0,
-                backgroundImage: 'linear-gradient(rgba(6,182,212,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.05) 1px, transparent 1px)',
-                backgroundSize: '50px 50px'
-            }} />
-
-            <div className="relative z-10 w-full max-w-md px-4">
-                <div className="animate-fade-in" style={{
-                    background: 'rgba(30, 41, 59, 0.85)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(6, 182, 212, 0.3)',
-                    borderRadius: '1.5rem',
-                    padding: '2.5rem',
-                    boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(6,182,212,0.1)'
-                }}>
-                    {/* Shield Icon */}
-                    <div className="flex justify-center mb-6">
-                        <div className="animate-glow" style={{
-                            width: '80px', height: '80px',
-                            background: 'linear-gradient(135deg, #1E3A8A, #06B6D4)',
-                            borderRadius: '1.25rem',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 0 30px rgba(6,182,212,0.4)'
-                        }}>
-                            <ShieldCheck size={42} color="white" />
+                    {/* Icon + Heading */}
+                    <div className="mb-8 text-center">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl border border-neutral-200 dark:border-neutral-800 mb-5">
+                            <ShieldCheck size={28} />
                         </div>
-                    </div>
-
-                    {/* Heading */}
-                    <div className="text-center mb-8">
-                        <h1 style={{ color: '#F1F5F9', fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem', fontFamily: 'Inter, sans-serif' }}>
-                            Admin Portal
-                        </h1>
-                        <p style={{ color: '#94A3B8', fontSize: '0.875rem' }}>
-                            EduVaultX — Restricted Access
+                        <h1 className="text-2xl font-bold tracking-tight mb-1">Admin Portal</h1>
+                        <p className="text-sm text-neutral-500">
+                            Sign in to access the EduVaultX dashboard
                         </p>
-                        <div style={{
-                            margin: '1rem auto 0',
-                            width: '60px', height: '3px',
-                            background: 'linear-gradient(90deg, #1E3A8A, #06B6D4)',
-                            borderRadius: '999px'
-                        }} />
                     </div>
 
-                    {/* Error Banner */}
+                    {/* Error banner */}
                     {error && (
                         <div style={{
-                            background: 'rgba(239,68,68,0.15)',
-                            border: '1px solid rgba(239,68,68,0.4)',
-                            borderRadius: '0.5rem', padding: '0.75rem 1rem',
-                            marginBottom: '1.5rem', color: '#FCA5A5',
-                            fontSize: '0.875rem', textAlign: 'center'
+                            background: 'rgba(239,68,68,0.06)',
+                            border: '1px solid rgba(239,68,68,0.25)',
+                            borderRadius: '6px',
+                            padding: '0.65rem 0.9rem',
+                            marginBottom: '1.25rem',
+                            color: '#dc2626',
+                            fontSize: '0.85rem',
+                            textAlign: 'center',
                         }}>
                             {error}
                         </div>
                     )}
 
                     {/* Form */}
-                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
                         {/* Username */}
                         <div>
-                            <label style={{ display: 'block', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.8rem',
+                                fontWeight: 500,
+                                marginBottom: '0.4rem',
+                                color: 'var(--color-fg)',
+                            }}>
                                 Admin Username
                             </label>
                             <div style={{ position: 'relative' }}>
-                                <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
+                                <User size={15} style={{
+                                    position: 'absolute', left: '11px', top: '50%',
+                                    transform: 'translateY(-50%)', color: 'var(--color-muted)',
+                                    pointerEvents: 'none',
+                                }} />
                                 <input
                                     id="admin-username"
                                     type="text"
@@ -136,22 +120,15 @@ export default function AdminLoginPage() {
                                     onChange={(e) => setUsername(e.target.value)}
                                     placeholder="Enter admin username"
                                     required
+                                    className="input"
                                     style={{
-                                        width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem',
-                                        background: 'rgba(15,23,42,0.6)',
-                                        border: '1px solid rgba(51,65,85,0.8)',
-                                        borderRadius: '0.625rem', color: '#F1F5F9',
-                                        fontSize: '0.9rem', outline: 'none',
-                                        transition: 'border-color 0.2s, box-shadow 0.2s',
-                                        boxSizing: 'border-box'
-                                    }}
-                                    onFocus={e => {
-                                        e.target.style.borderColor = '#06B6D4';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)';
-                                    }}
-                                    onBlur={e => {
-                                        e.target.style.borderColor = 'rgba(51,65,85,0.8)';
-                                        e.target.style.boxShadow = 'none';
+                                        width: '100%',
+                                        paddingLeft: '2.25rem',
+                                        paddingRight: '0.75rem',
+                                        paddingTop: '0.65rem',
+                                        paddingBottom: '0.65rem',
+                                        boxSizing: 'border-box',
+                                        fontSize: '0.9rem',
                                     }}
                                 />
                             </div>
@@ -159,11 +136,21 @@ export default function AdminLoginPage() {
 
                         {/* Password */}
                         <div>
-                            <label style={{ display: 'block', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.8rem',
+                                fontWeight: 500,
+                                marginBottom: '0.4rem',
+                                color: 'var(--color-fg)',
+                            }}>
                                 Password
                             </label>
                             <div style={{ position: 'relative' }}>
-                                <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
+                                <Lock size={15} style={{
+                                    position: 'absolute', left: '11px', top: '50%',
+                                    transform: 'translateY(-50%)', color: 'var(--color-muted)',
+                                    pointerEvents: 'none',
+                                }} />
                                 <input
                                     id="admin-password"
                                     type={showPassword ? 'text' : 'password'}
@@ -171,34 +158,30 @@ export default function AdminLoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter password"
                                     required
+                                    className="input"
                                     style={{
-                                        width: '100%', padding: '0.75rem 3rem 0.75rem 2.75rem',
-                                        background: 'rgba(15,23,42,0.6)',
-                                        border: '1px solid rgba(51,65,85,0.8)',
-                                        borderRadius: '0.625rem', color: '#F1F5F9',
-                                        fontSize: '0.9rem', outline: 'none',
-                                        transition: 'border-color 0.2s, box-shadow 0.2s',
-                                        boxSizing: 'border-box'
-                                    }}
-                                    onFocus={e => {
-                                        e.target.style.borderColor = '#06B6D4';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)';
-                                    }}
-                                    onBlur={e => {
-                                        e.target.style.borderColor = 'rgba(51,65,85,0.8)';
-                                        e.target.style.boxShadow = 'none';
+                                        width: '100%',
+                                        paddingLeft: '2.25rem',
+                                        paddingRight: '2.75rem',
+                                        paddingTop: '0.65rem',
+                                        paddingBottom: '0.65rem',
+                                        boxSizing: 'border-box',
+                                        fontSize: '0.9rem',
                                     }}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     style={{
-                                        position: 'absolute', right: '12px', top: '50%',
-                                        transform: 'translateY(-50%)', background: 'none',
-                                        border: 'none', cursor: 'pointer', color: '#64748B', padding: '4px'
+                                        position: 'absolute', right: '10px', top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none', border: 'none',
+                                        cursor: 'pointer', color: 'var(--color-muted)',
+                                        padding: '4px',
+                                        display: 'flex', alignItems: 'center',
                                     }}
                                 >
-                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                 </button>
                             </div>
                         </div>
@@ -208,69 +191,77 @@ export default function AdminLoginPage() {
                             id="admin-login-btn"
                             type="submit"
                             disabled={loading}
+                            className="btn-primary"
                             style={{
-                                width: '100%', padding: '0.875rem',
-                                background: loading
-                                    ? 'rgba(6,182,212,0.4)'
-                                    : 'linear-gradient(135deg, #1E3A8A, #06B6D4)',
-                                border: 'none', borderRadius: '0.625rem',
-                                color: 'white', fontWeight: 700,
-                                fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer',
-                                transition: 'opacity 0.2s, transform 0.2s',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                                marginTop: '0.5rem',
-                                boxShadow: '0 4px 20px rgba(6,182,212,0.3)'
+                                width: '100%',
+                                padding: '0.7rem 1rem',
+                                marginTop: '0.25rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                fontSize: '0.9rem',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                opacity: loading ? 0.6 : 1,
                             }}
-                            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.opacity = '0.9'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
                         >
                             {loading ? (
                                 <>
                                     <div style={{
-                                        width: '18px', height: '18px',
+                                        width: '15px', height: '15px',
                                         border: '2px solid rgba(255,255,255,0.4)',
-                                        borderTopColor: 'white', borderRadius: '50%',
-                                        animation: 'spin 0.8s linear infinite'
+                                        borderTopColor: 'white',
+                                        borderRadius: '50%',
+                                        animation: 'spin 0.8s linear infinite',
                                     }} />
-                                    Authenticating...
+                                    Authenticating…
                                 </>
                             ) : (
                                 <>
-                                    <ShieldCheck size={18} />
-                                    Sign In as Admin
+                                    Sign In as Admin <ArrowRight size={16} />
                                 </>
                             )}
                         </button>
                     </form>
 
-                    {/* Hint */}
+                    {/* Divider */}
                     <div style={{
-                        marginTop: '1.5rem', padding: '0.75rem',
-                        background: 'rgba(6,182,212,0.08)',
-                        border: '1px solid rgba(6,182,212,0.15)',
-                        borderRadius: '0.5rem', textAlign: 'center'
+                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                        margin: '1.5rem 0',
                     }}>
-                        <p style={{ color: '#64748B', fontSize: '0.75rem' }}>
-                            🔒 Demo credentials: <span style={{ color: '#06B6D4' }}>admin</span> / <span style={{ color: '#06B6D4' }}>admin123</span>
+                        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-muted)' }}>demo access</span>
+                        <div style={{ flex: 1, height: '1px', background: 'var(--color-border)' }} />
+                    </div>
+
+                    {/* Demo credentials hint */}
+                    <div className="card" style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
+                            🔒 Demo credentials:{' '}
+                            <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>admin</span>
+                            {' '}/${' '}
+                            <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>admin123</span>
                         </p>
                     </div>
 
-                    {/* Back link */}
+                    {/* Back to Home */}
                     <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
                         <button
                             onClick={() => router.push('/')}
+                            className="btn-secondary"
                             style={{
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                color: '#64748B', fontSize: '0.8rem', transition: 'color 0.2s'
+                                fontSize: '0.82rem',
+                                padding: '0.5rem 1.25rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.color = '#06B6D4')}
-                            onMouseLeave={e => (e.currentTarget.style.color = '#64748B')}
                         >
                             ← Back to Home
                         </button>
                     </div>
                 </div>
-            </div>
+            </main>
 
             <style>{`
                 @keyframes spin {

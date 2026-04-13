@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Lock, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -25,67 +24,87 @@ export default function LoginPage() {
                 toast.error('Please enter username and password');
                 setLoading(false);
             }
-        }, 1000);
+        }, 800);
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] p-4">
-            <div className="w-full max-w-md">
-                <div className="bg-[var(--color-card)] rounded-2xl shadow-2xl p-8 animate-fade-in">
-                    {/* Logo */}
-                    <div className="flex justify-center mb-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] rounded-2xl flex items-center justify-center animate-glow">
-                            <Lock size={40} className="text-white" />
+        <div className="min-h-screen grid lg:grid-cols-2 bg-white text-black">
+            {/* Left Side - Form */}
+            <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-24 py-12 relative">
+                <button 
+                    onClick={() => router.push('/')}
+                    className="absolute top-8 left-8 lg:left-24 text-neutral-400 hover:text-black flex items-center gap-2 text-sm transition-colors"
+                >
+                    <ArrowLeft size={16} /> Back
+                </button>
+
+                <div className="max-w-[400px] w-full mx-auto lg:mx-0 animate-fade-in">
+                    <div className="mb-12">
+                        <div className="w-10 h-10 border border-black flex items-center justify-center mb-6">
+                            <Lock size={18} strokeWidth={2.5} />
                         </div>
+                        <h1 className="text-3xl font-black tracking-tight mb-2">Welcome Back.</h1>
+                        <p className="text-neutral-500 text-sm">Sign in to access the blockchain dashboard.</p>
                     </div>
 
-                    {/* Title */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">
-                            EduVaultX
-                        </h1>
-                        <p className="text-[var(--color-text-muted)]">
-                            Blockchain Integration System
-                        </p>
-                    </div>
-
-                    {/* Login Form */}
                     <form onSubmit={handleLogin} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-neutral-500">
                                 Username
                             </label>
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-[var(--color-text)] transition-all"
-                                placeholder="Enter your username"
+                                className="w-full px-0 py-3 bg-transparent border-b border-neutral-200 focus:border-black focus:outline-none transition-colors placeholder:text-neutral-300 text-lg"
+                                placeholder="name@domain"
+                                required
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-widest text-neutral-500">
                                 Password
                             </label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] text-[var(--color-text)] transition-all"
-                                placeholder="Enter your password"
+                                className="w-full px-0 py-3 bg-transparent border-b border-neutral-200 focus:border-black focus:outline-none transition-colors placeholder:text-neutral-300 text-lg"
+                                placeholder="••••••••"
+                                required
                             />
                         </div>
 
-                        <Button type="submit" className="w-full" size="lg" loading={loading}>
-                            Sign In
-                        </Button>
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="w-full btn-primary h-14 text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 mt-4"
+                        >
+                            {loading ? 'Authenticating...' : 'Sign In'}
+                        </button>
                     </form>
 
-                    {/* Footer */}
-                    <p className="text-center text-xs text-[var(--color-text-muted)] mt-8">
-                        Secured by Blockchain Technology
+                    <div className="mt-12 pt-12 border-t border-neutral-100 italic text-neutral-400 text-xs">
+                        Blockchain integrity, verified locally.
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side - Visual / Empty Space with subtle text */}
+            <div className="hidden lg:flex bg-neutral-950 items-center justify-center p-24 overflow-hidden relative">
+                <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+                <div className="relative text-white max-w-md">
+                    <div className="text-8xl font-black text-neutral-900 absolute -top-12 -left-12 select-none">
+                        AUTH
+                    </div>
+                    <p className="text-2xl font-medium leading-relaxed relative z-10">
+                        "Security is not a feature, it's the foundation."
                     </p>
+                    <div className="mt-8 flex gap-4">
+                        <div className="w-12 h-1 bg-white" />
+                        <span className="text-xs font-bold tracking-widest uppercase">EduVaultX</span>
+                    </div>
                 </div>
             </div>
         </div>

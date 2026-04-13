@@ -28,7 +28,7 @@ export function Navbar() {
     };
 
     return (
-        <nav className="bg-[var(--color-card)] border-b border-[var(--color-border)] px-6 py-4 animate-slide-down sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+        <nav className="glass-effect px-6 py-4 sticky top-0 z-[100] border-b border-[var(--color-border)]">
             <div className="flex items-center justify-between">
                 {/* Logo and Title */}
                 <div className="flex items-center gap-3">

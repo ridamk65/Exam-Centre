@@ -28,9 +28,14 @@ export default function RootLayout({
           toastOptions={{
             duration: 3000,
             style: {
-              background: 'var(--color-card)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
+              background: '#000000',
+              color: '#ffffff',
+              border: '1px solid #000000',
+              borderRadius: '0px',
+              fontSize: '12px',
+              fontWeight: '900',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
             },
           }}
         />

@@ -34,7 +34,7 @@ export function FileUpload({ onFileSelect, accept = '.pdf,.doc,.docx', maxSize =
         setIsDragging(false);
     }, []);
 
-    const validateFile = (file: File): boolean => {
+    const validateFile = useCallback((file: File): boolean => {
         setError(null);
 
         if (maxSize && file.size > maxSize * 1024 * 1024) {
@@ -43,7 +43,7 @@ export function FileUpload({ onFileSelect, accept = '.pdf,.doc,.docx', maxSize =
         }
 
         return true;
-    };
+    }, [maxSize]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -57,7 +57,7 @@ export function FileUpload({ onFileSelect, accept = '.pdf,.doc,.docx', maxSize =
                 onFileSelect(file);
             }
         }
-    }, [onFileSelect, maxSize]);
+    }, [onFileSelect, validateFile]);
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;

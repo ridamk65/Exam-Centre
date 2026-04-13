@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 export function Navbar() {
     const router = useRouter();
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
-    const [isConnected, setIsConnected] = useState(true);
+    const [isConnected] = useState(true);
 
     useEffect(() => {
         // Initialize theme from localStorage or system preference
@@ -16,7 +16,7 @@ export function Navbar() {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
 
-        setTheme(initialTheme);
+        setTimeout(() => setTheme(initialTheme), 0);
         document.documentElement.setAttribute('data-theme', initialTheme);
     }, []);
 

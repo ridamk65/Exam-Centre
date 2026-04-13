@@ -19,7 +19,7 @@ export function initializeProvider(rpcUrl: string = 'http://localhost:8545') {
 /**
  * Store paper hash to blockchain (mock implementation)
  */
-export async function storePaperHash(paperHash: string, metadata: any): Promise<{ success: boolean; txHash?: string; error?: string }> {
+export async function storePaperHash(paperHash: string, metadata: Record<string, unknown>): Promise<{ success: boolean; txHash?: string; error?: string }> {
     try {
         // Mock implementation - replace with actual smart contract interaction
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
@@ -48,8 +48,9 @@ export async function storePaperHash(paperHash: string, metadata: any): Promise<
 /**
  * Verify paper hash against blockchain (mock implementation)
  */
-export async function verifyPaperHash(paperHash: string): Promise<{ valid: boolean; timestamp?: string; error?: string }> {
+export async function verifyPaperHash(_paperHash: string): Promise<{ valid: boolean; timestamp?: string; error?: string }> {
     try {
+        console.log(`Verifying: ${_paperHash}`);
         // Mock implementation - replace with actual smart contract query
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
 
@@ -71,8 +72,9 @@ export async function verifyPaperHash(paperHash: string): Promise<{ valid: boole
 /**
  * Fetch access logs from blockchain (mock implementation)
  */
-export async function fetchBlockchainLogs(limit: number = 50): Promise<any[]> {
+export async function fetchBlockchainLogs(_limit: number = 50): Promise<Record<string, unknown>[]> {
     try {
+        console.log(`Fetching logs with limit: ${_limit}`);
         // Mock implementation - replace with actual event log fetching
         await new Promise(resolve => setTimeout(resolve, 500));
 

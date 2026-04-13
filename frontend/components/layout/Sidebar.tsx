@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, FileText, ChevronLeft, ChevronRight, Lock, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, ChevronLeft, ChevronRight, Lock, LogOut, Upload, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 
@@ -11,6 +11,8 @@ const menuItems = [
     { icon: LayoutDashboard, label: 'Overview', href: ROUTES.dashboard },
     { icon: Users, label: 'User Directory', href: ROUTES.users },
     { icon: FileText, label: 'Blockchain Logs', href: ROUTES.logs },
+    { icon: Upload, label: 'Upload Module', href: '/upload' },
+    { icon: Settings, label: 'System Settings', href: '/settings' },
 ];
 
 export function Sidebar() {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     ShieldCheck, Users, FileText, Activity,
-    Settings, LogOut, Upload, Eye, Trash2,
+    Settings, LogOut, Upload, Eye,
     Bell, Database, Lock, CheckCircle, AlertTriangle
 } from 'lucide-react';
 
@@ -40,9 +40,9 @@ export default function AdminDashboardPage() {
         if (!isAuth) {
             router.replace('/admin/login');
         } else {
-            setAuthenticated(true);
+            setTimeout(() => setAuthenticated(true), 0);
         }
-        setTime(new Date().toLocaleTimeString());
+        setTimeout(() => setTime(new Date().toLocaleTimeString()), 0);
         const t = setInterval(() => setTime(new Date().toLocaleTimeString()), 1000);
         return () => clearInterval(t);
     }, [router]);
@@ -132,7 +132,7 @@ export default function AdminDashboardPage() {
                             Welcome back, Admin 👋
                         </h1>
                         <p style={{ color: '#94A3B8', margin: '0.25rem 0 0', fontSize: '0.9rem' }}>
-                            Here's a full overview of the EduVaultX system.
+                            Here&apos;s a full overview of the EduVaultX system.
                         </p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

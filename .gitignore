@@ -1,0 +1,26 @@
+node_modules/
+.env
+.DS_Store
+
+# Log files (all directories)
+*.log
+**/*.log
+logs/
+
+# Database
+eduvault.db
+
+# Blockchain build artifacts
+artifacts/
+cache/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Next.js
+.next/
+out/
+
+# ESLint output (not config)
+eslint.json
+eslint-errors.log

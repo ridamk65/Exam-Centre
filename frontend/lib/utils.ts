@@ -1,5 +1,3 @@
-import crypto from 'crypto';
-
 /**
  * Generate SHA-256 hash from file content
  */
@@ -7,8 +5,7 @@ export async function generateFileHash(file: File): Promise<string> {
     const buffer = await file.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return `Qm${hashHex.substring(0, 40)}`; // IPFS-style hash format
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -28,7 +25,7 @@ export function formatDate(dateString: string): string {
 /**
  * Convert data to CSV format
  */
-export function convertToCSV(data: any[]): string {
+export function convertToCSV(data: Record<string, string | number | boolean | null>[]): string {
     if (data.length === 0) return '';
 
     const headers = Object.keys(data[0]);

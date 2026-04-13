@@ -1,22 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, CheckCircle, XCircle, Filter, Search, ShieldCheck } from 'lucide-react';
 import { Table, TableRow, TableCell } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { MOCK_LOGS } from '@/lib/constants';
-import { formatDate, truncateHash, convertToCSV, downloadFile } from '@/lib/utils';
+import { formatDate, truncateHash, convertToCSV, downloadFile, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
+interface LogEntry {
+    id: string;
+    userName: string;
+    user: string;
+    action: string;
+    timestamp: string;
+    status: string;
+    paperHash: string;
+}
+
 export default function LogsPage() {
-    const [logs, setLogs] = useState(MOCK_LOGS);
+    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'granted' | 'denied'>('all');
+
+    useEffect(() => {
+        const fetchLogs = async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('http://localhost:5000/api/auth/logs', {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                setLogs(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+                toast.error('Failed to load access logs');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLogs();
+    }, []);
 
     const filteredLogs = logs.filter(log => {
         if (filter === 'all') return true;
         return log.status.toLowerCase() === filter;
     });
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="flex flex-col items-center gap-4">
+                    <ShieldCheck className="animate-pulse text-neutral-400" size={48} />
+                    <p className="text-sm font-black uppercase tracking-[0.2em] animate-pulse">Syncing Audit Ledger...</p>
+                </div>
+            </div>
+        );
+    }
 
     const handleVerify = async (hash: string) => {
         try {
@@ -33,7 +75,7 @@ export default function LogsPage() {
             } else {
                 toast.error('Hash verification failed');
             }
-        } catch (error) {
+        } catch {
             toast.error('Verification failed');
         }
     };
@@ -74,7 +116,7 @@ export default function LogsPage() {
                 </div>
                 <div className="border border-neutral-100 p-6 bg-neutral-50">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-2">Success Rate</p>
-                    <p className="text-2xl font-black">{Math.round((logs.filter(l => l.status === 'Granted').length / logs.length) * 100)}%</p>
+                    <p className="text-2xl font-black">{logs.length > 0 ? Math.round((logs.filter(l => l.status === 'Granted').length / logs.length) * 100) : 0}%</p>
                 </div>
                 <div className="border border-neutral-100 p-6 bg-green-50">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-600 mb-2">Verified</p>

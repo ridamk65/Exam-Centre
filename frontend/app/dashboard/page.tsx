@@ -1,23 +1,62 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Users, Shield, Clock, TrendingUp, Activity, Server } from 'lucide-react';
 import { MetricCard } from '@/components/ui/Card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MOCK_USERS, MOCK_LOGS } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
-const chartData = [
-    { date: '02.09', accesses: 12 },
-    { date: '02.10', accesses: 18 },
-    { date: '02.11', accesses: 15 },
-    { date: '02.12', accesses: 22 },
-    { date: '02.13', accesses: 28 },
-];
+interface DashboardStats {
+    totalUsers: number | string;
+    verifiedLogs: number | string;
+    lastAccess: string | null;
+    chartData: Array<{ date: string; accesses: number }>;
+}
 
 export default function DashboardPage() {
-    const totalUsers = MOCK_USERS.length;
-    const verifiedLogs = MOCK_LOGS.filter(log => log.status === 'Granted').length;
-    const lastAccess = MOCK_LOGS[0];
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch('http://127.0.0.1:5000/api/auth/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                setStats(data);
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+                toast.error('Failed to load dashboard statistics');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (isLoading || !stats) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="flex flex-col items-center gap-4">
+                    <Activity className="animate-pulse text-neutral-400" size={48} />
+                    <p className="text-sm font-black uppercase tracking-[0.2em] animate-pulse">Initializing Dashboard Data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const totalUsers = stats.totalUsers;
+    const verifiedLogs = stats.verifiedLogs;
+    const lastAccessTime = stats.lastAccess ? formatDate(stats.lastAccess).split(',')[1].trim() : 'No Data';
+    const chartData = stats.chartData && stats.chartData.length > 0 ? stats.chartData : [];
 
     return (
         <div className="max-w-[1200px] mx-auto space-y-12 py-8 animate-fade-in">
@@ -33,7 +72,7 @@ export default function DashboardPage() {
                     <div className="flex items-start justify-between mb-4">
                         <Users size={20} className="text-neutral-400 group-hover:text-black transition-colors" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 flex items-center gap-1">
-                            <TrendingUp size={12} className="text-black" /> +12%
+                            <TrendingUp size={12} className="text-black" /> STABLE
                         </span>
                     </div>
                     <div className="text-4xl font-black mb-1 tracking-tighter">{totalUsers}</div>
@@ -59,7 +98,7 @@ export default function DashboardPage() {
                         </span>
                     </div>
                     <div className="text-3xl font-black mb-1 tracking-tighter truncate">
-                        {formatDate(lastAccess.timestamp).split(',')[1].trim()}
+                        {lastAccessTime}
                     </div>
                     <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Last System Interaction</div>
                 </div>
@@ -157,7 +196,7 @@ export default function DashboardPage() {
                     <Shield size={40} className="mx-auto mb-4" />
                     <h3 className="text-xl font-black mb-2 tracking-tight">Active Protection.</h3>
                     <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest leading-relaxed">
-                        All exam papers are currently <br /> anchored to block <span className="text-white">#19485721</span>
+                        All exam papers are currently <br /> anchored to blockchain records.
                     </p>
                     <button className="mt-8 text-[10px] font-black border border-white/20 px-4 py-2 hover:bg-white hover:text-black transition-all uppercase tracking-widest">
                         Refresh Proofs

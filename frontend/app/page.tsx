@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   ShieldCheck, Lock, Cpu, QrCode, FileText,
-  ChevronRight, ArrowRight, CheckCircle,
-  Zap, Globe, Users, BarChart3
+  ArrowRight, Users, BarChart3
 } from 'lucide-react';
 
 const features = [

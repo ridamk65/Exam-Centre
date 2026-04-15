@@ -16,7 +16,7 @@
 
 // --- Backend Configuration ---
 // Run `ipconfig` on your PC and set the IPv4 address here
-#define SERVER_IP   "192.168.x.x"
+#define SERVER_IP   "10.73.72.231"
 #define SERVER_PORT "5000"
 #define SERVER_URL  "http://" SERVER_IP ":" SERVER_PORT "/api/auth/verify"
 

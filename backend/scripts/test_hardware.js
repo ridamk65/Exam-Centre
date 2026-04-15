@@ -16,4 +16,3 @@ fetch(url, {
 .then(res => res.json().then(data => ({ status: res.status, data })))
 .then(result => console.log("Hardware Simulation Response:", result))
 .catch(err => console.error("Error:", err));
--

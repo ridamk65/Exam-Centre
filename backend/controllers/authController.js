@@ -27,15 +27,19 @@ exports.verifyAccess = async (req, res) => {
                 return res.status(403).json({ success: false, message: "Access Denied" });
             }
 
-            if (user.faceEncoding !== faceEncoding) {
-                failedAttempts++;
-                if (failedAttempts > 5) console.log("🚨 Possible attack detected! (Face mismatch sequence)");
-                return res.status(401).json({ message: "Face mismatch" });
-            }
+            // Face recognition temporarily disabled per user request
+            // if (user.faceEncoding !== faceEncoding) {
+            //     failedAttempts++;
+            //     if (failedAttempts > 5) console.log("🚨 Possible attack detected! (Face mismatch sequence)");
+            //     return res.status(401).json({ message: "Face mismatch" });
+            // }
+
+            // Default paperData if not provided by ESP32 RFID scanner
+            const validPaperData = paperData || "Generic Exam Access";
 
             const paperHash = crypto
                 .createHash("sha256")
-                .update(paperData)
+                .update(validPaperData)
                 .digest("hex");
 
             let txHash = null;

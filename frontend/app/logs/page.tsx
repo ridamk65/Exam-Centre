@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, CheckCircle, XCircle, Filter, Search, ShieldCheck } from 'lucide-react';
+import { Download, Search, ShieldCheck } from 'lucide-react';
 import { Table, TableRow, TableCell } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { formatDate, truncateHash, convertToCSV, downloadFile, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -135,7 +134,7 @@ export default function LogsPage() {
                         {['all', 'granted', 'denied'].map((f) => (
                              <button
                                 key={f}
-                                onClick={() => setFilter(f as any)}
+                                onClick={() => setFilter(f as 'all' | 'granted' | 'denied')}
                                 className={cn(
                                     "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all",
                                     filter === f ? "bg-white text-black shadow-sm" : "text-neutral-400 hover:text-black"
